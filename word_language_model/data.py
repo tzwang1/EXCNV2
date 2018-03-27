@@ -220,7 +220,9 @@ class Corpus(object):
         test_tar_path = "data/test_tar.npy"
 
         try:
-            train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
+            #train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
+            train_x = np.load('data/fake_in.npy')
+            train_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved training data")
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, seq_len)
