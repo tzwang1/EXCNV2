@@ -98,9 +98,9 @@ def batchify(input_data, target_data, bsz):
     # Evenly divide the data across the bsz batches.
     input_data = input_data.view(input_data.shape[0] // bsz, bsz, input_data.shape[1], -1)
     target_data = target_data.view(bsz, -1).t().contiguous()
-    if args.cuda:
-        input_data = input_data.cuda()
-        target_data = target_data.cuda()
+    # if args.cuda:
+    #     input_data = input_data.cuda()
+    #     target_data = target_data.cuda()
     return input_data, target_data
 
 # def batchify(data, bsz):
@@ -161,24 +161,18 @@ def repackage_hidden(h):
 def get_batch(input_data, target_data, i, evaluation=False):
     #import pdb; pdb.set_trace()
     seq_len = min(args.bptt, len(input_data) - i)
-    # print("Shape before modification...")
-    # print(input_data.shape)
-    # print(target_data.shape)
-    data = Variable(input_data[i:i+seq_len], volatile=evaluation)
-    target = Variable(target_data[i:i+seq_len])
-    # print("Printing data shape..")
-    # print(data.shape)
-    # print(target.shape)
+    
+    data = input_data[i:i+seq_len]
+    target = target_data[i+i+seq_len]
+    if args.cuda:
+        data = data.cuda()
+        target = target.cuda()
+
+    data = Variable(data, volatile=evaluation)
+    target = Variable(target)
+
     return data, target
 
-# def get_batch(source, i, evaluation=False):
-#     seq_len = min(args.bptt, len(source) - 1 - i)
-#     data = Variable(source[i:i+seq_len], volatile=evaluation)
-#     target = Variable(source[i+1:i+1+seq_len].view(-1))
-#     return data, target
-
-
-# def evaluate(data_source):
 def evaluate(input_data, target_data):
     # Turn on evaluation mode which disables dropout.
     model.eval()
