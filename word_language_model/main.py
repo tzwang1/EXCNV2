@@ -42,7 +42,7 @@ parser.add_argument('--epochs', type=int, default=40,
                     help='upper epoch limit')
 parser.add_argument('--batch_size', type=int, default=20, metavar='N',
                     help='batch size')
-parser.add_argument('--bptt', type=int, default=35,
+parser.add_argument('--bptt', type=int, default=50,
                     help='sequence length')
 parser.add_argument('--dropout', type=float, default=0.2,
                     help='dropout applied to layers (0 = no dropout)')
@@ -71,8 +71,9 @@ if torch.cuda.is_available():
 ###############################################################################
 
 # corpus = data.Corpus(args.data)
-num = 7000000
+# num = 7000000
 #num = 100000
+num = 1000
 seq_len = 30
 corpus = data.Corpus(args.input_train, args.target_train, args.input_val, args.target_val, args.input_test, args.target_test, num, seq_len)
 
@@ -159,8 +160,8 @@ def repackage_hidden(h):
 # to the seq_len dimension in the LSTM.
 
 def get_batch(input_data, target_data, i, evaluation=False):
-    #import pdb; pdb.set_trace()
-    seq_len = min(args.bptt, len(input_data) - i)
+    import pdb; pdb.set_trace()
+    seq_len = min(args.bptt, len(input_data) - 1 - i)
     
     data = input_data[i:i+seq_len]
     target = target_data[i+i+seq_len]
@@ -197,8 +198,8 @@ def evaluate(input_data, target_data):
         hidden = repackage_hidden(hidden)
     # return total_loss[0] / len(data_source)
         #import pdb; pdb.set_trace()
-        pred = output.data.max(2, keepdim=True)[1]
-        #import pdb; pdb.set_trace()
+        pred = output.data.max(1, keepdim=True)[1]
+        #pred = output.data.max(2, keepdim=True)[1]
         correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
         total += output.shape[0] * output.shape[1]
     return total_loss[0] / len(input_data), correct/total
@@ -217,7 +218,7 @@ def train():
     # print(train_in.shape)
     # print(train_in.size(0))
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
-        # import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         print("Starting trainig iteration {}".format(i))
         data, targets = get_batch(train_in, train_tar, i)
         # Rearrange data to be in the shape of seq_len x batch size x input size

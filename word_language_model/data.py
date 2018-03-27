@@ -220,23 +220,27 @@ class Corpus(object):
         test_tar_path = "data/test_tar.npy"
 
         try:
-            #train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
-            train_x = np.load('data/fake_in.npy')
-            train_y = np.load('data/fake_tar.npy')
+            train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
+            # train_x = np.load('data/fake_in.npy')
+            # train_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved training data")
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, seq_len)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
         try:
-            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+            # val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+            val_x = np.load('data/fake_in.npy')
+            val_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved validation data")
             val_x, val_y = load_data(val_in_txt, val_tar_txt, num, seq_len)
             save_data(val_x, val_y, val_in_path, val_tar_path)
 
         try:
-            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+            # test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+            test_x = np.load('data/fake_in.npy')
+            test_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved test data")
             test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
@@ -251,7 +255,8 @@ class Corpus(object):
 
         test_in = torch.from_numpy(test_x).float()
         test_tar = torch.from_numpy(test_y).float()
-
+    
+        #import pdb; pdb.set_trace()
         # Flatten data
         self.train_in = train_in.view(train_in.shape[0], -1)
         self.train_tar = train_tar.view(train_tar.shape[0], -1)
