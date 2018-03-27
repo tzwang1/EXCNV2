@@ -75,7 +75,7 @@ def load(num, input_path, target_path, seq_len):
                     if(len(inline) != 4):
                         continue
                     
-                    cnv_in_seq = 'No'
+                    #cnv_in_seq = 'No'
                     tar_chrom = tarline[0] if 'chr' in tarline[0] else 'chr' + tarline[0]
                     tar_start = int(tarline[1])
                     tar_end = int(tarline[2])
@@ -89,10 +89,6 @@ def load(num, input_path, target_path, seq_len):
                     # Check if chromosomes are equal
                     if(tar_chrom == in_chrom):
                         if(tar_start <= in_pos and in_pos <= tar_end):
-                            # print("Found valid pos")
-                            # print(tar_start)
-                            # print(tar_end)
-                            # print(in_pos)
                             # Check if in_base is a valid base (A, T, C or G)
                             if(in_base in all_bases): 
                                 seq_tensor = seq_to_tensor(in_base)
@@ -103,14 +99,13 @@ def load(num, input_path, target_path, seq_len):
                             # Sets cnv_in_seq to 'Yes' if there is a CNV between start and end
                             if(tar_cnv == 'Yes'):
                                 cnv_in_seq = 'Yes'
+                            else:
+                                cnv_in_seq='No'
                             
                             cur_seq_len+=1
 
                             # When cur_seq_len is equal to seq_len set y and increment cur_num
                             if(cur_seq_len == seq_len):
-
-                                #if(cnv_in_seq == 'No'):
-                                #    print("cnv_in_seq = No")
 
                                 y[cur_num] = target_to_one_hot(cnv_in_seq)
                                 cur_seq_len = 0
