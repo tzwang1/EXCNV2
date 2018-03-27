@@ -22,7 +22,7 @@ val_tar_path = "data/val_tar.npy"
 test_in_path = "data/test_in.npy"
 test_tar_path = "data/test_tar.npy"
 
-test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
+test_x, test_y = load_data(test_in_txt, test_tar_txt, num, 30)
 save_data(test_x,test_y, test_in_path, test_tar_path)
 
 
