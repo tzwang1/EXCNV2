@@ -75,7 +75,7 @@ def load(num, input_path, target_path, seq_len):
                     if(len(inline) != 4):
                         continue
                     
-                    cnv_in_seq = 'No'
+                    #cnv_in_seq = 'No'
                     tar_chrom = tarline[0] if 'chr' in tarline[0] else 'chr' + tarline[0]
                     tar_start = int(tarline[1])
                     tar_end = int(tarline[2])
@@ -89,10 +89,6 @@ def load(num, input_path, target_path, seq_len):
                     # Check if chromosomes are equal
                     if(tar_chrom == in_chrom):
                         if(tar_start <= in_pos and in_pos <= tar_end):
-                            # print("Found valid pos")
-                            # print(tar_start)
-                            # print(tar_end)
-                            # print(in_pos)
                             # Check if in_base is a valid base (A, T, C or G)
                             if(in_base in all_bases): 
                                 seq_tensor = seq_to_tensor(in_base)
@@ -103,14 +99,13 @@ def load(num, input_path, target_path, seq_len):
                             # Sets cnv_in_seq to 'Yes' if there is a CNV between start and end
                             if(tar_cnv == 'Yes'):
                                 cnv_in_seq = 'Yes'
+                            else:
+                                cnv_in_seq='No'
                             
                             cur_seq_len+=1
 
                             # When cur_seq_len is equal to seq_len set y and increment cur_num
                             if(cur_seq_len == seq_len):
-
-                                #if(cnv_in_seq == 'No'):
-                                #    print("cnv_in_seq = No")
 
                                 y[cur_num] = target_to_one_hot(cnv_in_seq)
                                 cur_seq_len = 0
@@ -226,20 +221,26 @@ class Corpus(object):
 
         try:
             train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
+            # train_x = np.load('data/fake_in.npy')
+            # train_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved training data")
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, seq_len)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
         try:
-            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+            # val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+            val_x = np.load('data/fake_in.npy')
+            val_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved validation data")
             val_x, val_y = load_data(val_in_txt, val_tar_txt, num, seq_len)
             save_data(val_x, val_y, val_in_path, val_tar_path)
 
         try:
-            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+            # test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+            test_x = np.load('data/fake_in.npy')
+            test_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved test data")
             test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
@@ -254,7 +255,8 @@ class Corpus(object):
 
         test_in = torch.from_numpy(test_x).float()
         test_tar = torch.from_numpy(test_y).float()
-
+    
+        #import pdb; pdb.set_trace()
         # Flatten data
         self.train_in = train_in.view(train_in.shape[0], -1)
         self.train_tar = train_tar.view(train_tar.shape[0], -1)
