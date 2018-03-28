@@ -218,7 +218,7 @@ def train():
     # print(train_in.shape)
     # print(train_in.size(0))
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         print("Starting trainig iteration {}".format(i))
         data, targets = get_batch(train_in, train_tar, i)
         # Rearrange data to be in the shape of seq_len x batch size x input size
