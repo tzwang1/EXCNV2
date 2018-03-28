@@ -161,13 +161,13 @@ def repackage_hidden(h):
 
 def get_batch(input_data, target_data, i, evaluation=False):
     #import pdb; pdb.set_trace()
-    seq_len = min(args.bptt, len(input_data) - 1 - i)
+    sequence_len = min(args.bptt, len(input_data) - 1 - i)
     
-    data = input_data[i:i+seq_len]
-    target = target_data[i+i+seq_len]
-    if args.cuda:
-        data = data.cuda()
-        target = target.cuda()
+    data = input_data[i:i+sequence_len]
+    target = target_data[i:i+sequence_len]
+    # if args.cuda:
+    #     data = data.cuda()
+    #     target = target.cuda()
 
     data = Variable(data, volatile=evaluation)
     target = Variable(target)
@@ -184,7 +184,8 @@ def evaluate(input_data, target_data):
     hidden = model.init_hidden(args.batch_size)
     # hidden = model.init_hidden(eval_batch_size)
     # for i in range(0, data_source.size(0) - 1, args.bptt):
-    for batch, i in enumerate(range(0, input_data.size(0), args.bptt)):
+    # import pdb; pdb.set_trace()
+    for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
         data, targets = get_batch(input_data, target_data, i)
         data = data.squeeze(3)
         # data = Variable(rearrange(train_in[i]))
@@ -198,8 +199,8 @@ def evaluate(input_data, target_data):
         hidden = repackage_hidden(hidden)
     # return total_loss[0] / len(data_source)
         #import pdb; pdb.set_trace()
-        pred = output.data.max(1, keepdim=True)[1]
-        #pred = output.data.max(2, keepdim=True)[1]
+        #pred = output.data.max(1, keepdim=True)[1]
+        pred = output.data.max(2, keepdim=True)[1]
         correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
         total += output.shape[0] * output.shape[1]
     return total_loss[0] / len(input_data), correct/total
@@ -218,8 +219,8 @@ def train():
     # print(train_in.shape)
     # print(train_in.size(0))
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
-        #import pdb; pdb.set_trace()
-        print("Starting trainig iteration {}".format(i))
+        # import pdb; pdb.set_trace()
+        print("Starting training iteration {}".format(i))
         data, targets = get_batch(train_in, train_tar, i)
         # Rearrange data to be in the shape of seq_len x batch size x input size
         data = data.squeeze(3)
@@ -240,7 +241,7 @@ def train():
         output, hidden = model(data, hidden)
         # loss = criterion(output.view(-1, ntokens), targets)
         #targets = targets.view(targets.shape[0], 1)
-        # import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
         loss.backward()
