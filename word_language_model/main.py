@@ -5,6 +5,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 from torch.autograd import Variable
 
 import data
@@ -72,9 +73,10 @@ if torch.cuda.is_available():
 
 # corpus = data.Corpus(args.data)
 num = 100000
-# num = 7000000
-#num = 100000
 seq_len = 30
+# num = 300
+# seq_len = 10
+
 corpus = data.Corpus(args.input_train, args.target_train, args.input_val, args.target_val, args.input_test, args.target_test, num, seq_len)
 
 # Starting from sequential data, batchify arranges the dataset into columns.
@@ -136,6 +138,7 @@ if args.cuda:
     model.cuda()
 
 criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
 
 ###############################################################################
 # Training code
@@ -177,10 +180,10 @@ def get_batch(input_data, target_data, i, evaluation=False):
 def evaluate(input_data, target_data):
     # Turn on evaluation mode which disables dropout.
     model.eval()
-    total_loss = 0
+    total_loss = 0.0
     ntokens = 2
-    correct = 0
-    total = 0
+    correct = 0.0
+    total = 0.0
     hidden = model.init_hidden(args.batch_size)
     # hidden = model.init_hidden(eval_batch_size)
     # for i in range(0, data_source.size(0) - 1, args.bptt):
@@ -188,18 +191,12 @@ def evaluate(input_data, target_data):
     for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
         data, targets = get_batch(input_data, target_data, i)
         data = data.squeeze(3)
-        # data = Variable(rearrange(train_in[i]))
-        # data = data.t().contiguous()
-        # targets = Variable(targets[i])
+        
         output, hidden = model(data, hidden)
-        #targets = targets.view(targets.shape[0], 1)
-        # output_flat = output.view(-1, ntokens)
-        # total_loss += len(data) * criterion(output_flat, targets).data
+        
         total_loss += len(data) * criterion(output.view(-1, ntokens), targets.long().view(-1)).data
         hidden = repackage_hidden(hidden)
-    # return total_loss[0] / len(data_source)
-        #import pdb; pdb.set_trace()
-        #pred = output.data.max(1, keepdim=True)[1]
+    
         pred = output.data.max(2, keepdim=True)[1]
         correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
         total += output.shape[0] * output.shape[1]
@@ -209,42 +206,28 @@ def evaluate(input_data, target_data):
 def train():
     # Turn on training mode which enables dropout.
     model.train()
-    total_loss = 0
+    total_loss = 0.0
     start_time = time.time()
     ntokens = 2
     hidden = model.init_hidden(args.batch_size)
-    # for batch, i in enumerate(range(0, train_data.size(0) - 1, args.bptt)):
-    #     data, targets = get_batch(train_data, i)
-    # print("Train data size...")
-    # print(train_in.shape)
-    # print(train_in.size(0))
+    
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
-        # import pdb; pdb.set_trace()
         print("Starting training iteration {}".format(i))
         data, targets = get_batch(train_in, train_tar, i)
         # Rearrange data to be in the shape of seq_len x batch size x input size
         data = data.squeeze(3)
-        #data = Variable(rearrange(train_in[i]))
-        #data = data.t().contiguous()
-        #data = data.view(data.data.shape[0], -1)
-        #import pdb; pdb.set_trace()
-        # data = Variable(train_in[i], volatile=True)
-        # targets = Variable(train_tar[i])
-        # print("Printing size in loop...")
-        # print(data.shape)
-        # print(targets.shape)
 
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
         hidden = repackage_hidden(hidden)
         model.zero_grad()
         output, hidden = model(data, hidden)
-        # loss = criterion(output.view(-1, ntokens), targets)
-        #targets = targets.view(targets.shape[0], 1)
+ 
         #import pdb; pdb.set_trace()
         loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
         loss.backward()
+        optimizer.step()
 
         # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
         torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
@@ -254,19 +237,20 @@ def train():
         total_loss += loss.data
         _loss, correct = evaluate(train_in, train_tar.long())
 
-        #if(i % 35 == 0 and batch > 0):
-        # if batch % args.log_interval == 0 and batch > 0:
+        #import pdb; pdb.set_trace()
+        
         cur_loss = total_loss[0] / args.log_interval
         elapsed = time.time() - start_time
         print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
-                'loss {:5.2f} |  correct {:8.2f}'.format(
+                'loss {:5.8f} |  correct {:8.5f}'.format(
             epoch, batch, len(train_in) // args.bptt, lr,
             elapsed * 1000 / args.log_interval, cur_loss, correct))
         total_loss = 0
         start_time = time.time()
 
 # Loop over epochs.
-lr = args.lr
+# lr = args.lr
+lr = 0.001
 best_val_loss = None
 
 # At any point you can hit Ctrl + C to break out of training early.

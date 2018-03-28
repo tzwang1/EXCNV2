@@ -256,7 +256,6 @@ class Corpus(object):
         test_in = torch.from_numpy(test_x).float()
         test_tar = torch.from_numpy(test_y).float()
     
-        #import pdb; pdb.set_trace()
         # Flatten data
         self.train_in = train_in.view(train_in.shape[0], -1)
         self.train_tar = train_tar.view(train_tar.shape[0], -1)
@@ -266,23 +265,15 @@ class Corpus(object):
 
         self.test_in = test_in.view(test_in.shape[0], -1)
         self.test_tar = test_tar.view(test_tar.shape[0], -1)
-    # def tokenize(self, path):
-    #     """Tokenizes a text file."""
-    #     assert os.path.exists(path)
-    #     # Add words to the dictionary
-    #     with open(path, 'r') as f:
-    #         tokens = 0
-    #         for line in f:
-                
 
-    #     # Tokenize file content
-    #     with open(path, 'r') as f:
-    #         ids = torch.LongTensor(tokens)
-    #         token = 0
-    #         for line in f:
-    #             words = line.split() + ['<eos>']
-    #             for word in words:
-    #                 ids[token] = self.dictionary.word2idx[word]
-    #                 token += 1
+        # self.train_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
+        # self.train_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
 
-    #     return ids
+        # self.val_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
+        # self.val_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
+        
+        # self.test_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
+        # self.test_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
+        
+
+    

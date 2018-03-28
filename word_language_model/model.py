@@ -7,7 +7,7 @@ class RNNModel(nn.Module):
     def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, dropout=0.5, tie_weights=False):
         super(RNNModel, self).__init__()
 
-        self.drop = nn.Dropout(dropout)
+        #self.drop = nn.Dropout(dropout)
         # # TODO: add convlutional layer
         # self.downconv1 = nn.Sequential(
         #     nn.Conv2d(1, 32, kernel_size=5, padding=5 // 2),
@@ -59,7 +59,7 @@ class RNNModel(nn.Module):
     def forward(self, input, hidden):
         # import pdb; pdb.set_trace()
         output, hidden = self.rnn(input, hidden)
-        output = self.drop(output)
+        #output = self.drop(output)
         # output = output[-1] # Take the last output
         # print(output.shape)
         #decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))
