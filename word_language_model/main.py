@@ -160,7 +160,7 @@ def repackage_hidden(h):
 # to the seq_len dimension in the LSTM.
 
 def get_batch(input_data, target_data, i, evaluation=False):
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     seq_len = min(args.bptt, len(input_data) - 1 - i)
     
     data = input_data[i:i+seq_len]
