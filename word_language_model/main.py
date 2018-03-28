@@ -71,7 +71,7 @@ if torch.cuda.is_available():
 ###############################################################################
 
 # corpus = data.Corpus(args.data)
-num = 1000000
+num = 100000
 # num = 7000000
 #num = 100000
 seq_len = 30
