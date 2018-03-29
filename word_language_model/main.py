@@ -243,7 +243,7 @@ def train():
         
         cur_loss = total_loss[0] / args.log_interval
         elapsed = time.time() - start_time
-        print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.2f} | ms/batch {:5.2f} | '
+        print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
                 'loss {:5.8f} |  correct {:8.5f}'.format(
             epoch, batch, len(train_in) // args.bptt, lr,
             elapsed * 1000 / args.log_interval, cur_loss, correct))
@@ -251,14 +251,13 @@ def train():
         start_time = time.time()
 
 # Loop over epochs.
-# lr = args.lr
-lr = 0.001
+lr = args.lr
+# lr = 0.001
 best_val_loss = None
 
 # At any point you can hit Ctrl + C to break out of training early.
 try:
-    for epoch in range(1, 1000):
-    #for epoch in range(1, args.epochs+1):
+    for epoch in range(1, args.epochs+1):
         epoch_start_time = time.time()
         print("Starting training for epoch {}".format(epoch))
         train()
