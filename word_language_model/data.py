@@ -247,6 +247,17 @@ class Corpus(object):
             test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
             save_data(test_x,test_y, test_in_path, test_tar_path)
 
+
+        print("TARGET VALUES")
+        unique, counts = np.unique(train_y, return_counts=True)
+        print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
+
+        unique, counts = np.unique(val_y, return_counts=True)
+        print("VAL TAR: {}".format(dict(zip(unique, counts))))
+
+        unique, counts = np.unique(test_y, return_counts=True)
+        print("TEST TAR: {}".format(dict(zip(unique, counts))))
+
         # print(torch.from_numpy(x).shape)
         train_in = torch.from_numpy(train_x).float()
         train_tar = torch.from_numpy(train_y).float()
