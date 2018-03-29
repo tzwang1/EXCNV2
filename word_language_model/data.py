@@ -244,8 +244,8 @@ class Corpus(object):
             # test_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved test data")
-            #test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
-            #save_data(test_x,test_y, test_in_path, test_tar_path)
+            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
+            save_data(test_x,test_y, test_in_path, test_tar_path)
 
         # print(torch.from_numpy(x).shape)
         train_in = torch.from_numpy(train_x).float()
@@ -254,24 +254,24 @@ class Corpus(object):
         val_in = torch.from_numpy(val_x).float()
         val_tar = torch.from_numpy(val_y).float()
 
-        # test_in = torch.from_numpy(test_x).float()
-        # test_tar = torch.from_numpy(test_y).float()
+        test_in = torch.from_numpy(test_x).float()
+        test_tar = torch.from_numpy(test_y).float()
 
         # Flatten data
         self.train_in = train_in.view(train_in.shape[0], -1)
         self.train_tar = train_tar.view(train_tar.shape[0], -1)
 
-        self.val_in = train_in.view(train_in.shape[0], -1)
-        self.val_tar = train_tar.view(train_tar.shape[0], -1)
+        # self.val_in = train_in.view(train_in.shape[0], -1)
+        # self.val_tar = train_tar.view(train_tar.shape[0], -1)
 
-        self.test_in = train_in.view(train_in.shape[0], -1)
-        self.test_tar = train_tar.view(train_tar.shape[0], -1)
+        # self.test_in = train_in.view(train_in.shape[0], -1)
+        # self.test_tar = train_tar.view(train_tar.shape[0], -1)
 
-        # self.val_in = val_in.view(val_in.shape[0], -1)
-        # self.val_tar = val_tar.view(val_tar.shape[0], -1)
+        self.val_in = val_in.view(val_in.shape[0], -1)
+        self.val_tar = val_tar.view(val_tar.shape[0], -1)
 
-        # self.test_in = test_in.view(test_in.shape[0], -1)
-        # self.test_tar = test_tar.view(test_tar.shape[0], -1)
+        self.test_in = test_in.view(test_in.shape[0], -1)
+        self.test_tar = test_tar.view(test_tar.shape[0], -1)
 
         # self.train_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
         # self.train_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
