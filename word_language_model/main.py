@@ -74,7 +74,7 @@ if torch.cuda.is_available():
 # corpus = data.Corpus(args.data)
 # num = 100000
 # seq_len = 30
-num = 100000
+num = 1000000
 seq_len = 100
 
 corpus = data.Corpus(args.input_train, args.target_train, args.input_val, args.target_val, args.input_test, args.target_test, num, seq_len)
@@ -140,7 +140,8 @@ if args.cuda:
     model.cuda()
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
+# optimizer = optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 ###############################################################################
 # Training code
