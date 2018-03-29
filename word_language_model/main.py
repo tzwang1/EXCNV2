@@ -72,10 +72,10 @@ if torch.cuda.is_available():
 ###############################################################################
 
 # corpus = data.Corpus(args.data)
+# num = 100000
+# seq_len = 30
 num = 100000
-seq_len = 30
-# num = 300
-# seq_len = 10
+seq_len = 100
 
 corpus = data.Corpus(args.input_train, args.target_train, args.input_val, args.target_val, args.input_test, args.target_test, num, seq_len)
 
@@ -93,6 +93,7 @@ corpus = data.Corpus(args.input_train, args.target_train, args.input_val, args.t
 
 def batchify(input_data, target_data, bsz):
     print("Batchifying data....")
+    #import pdb; pdb.set_trace()
     # Work out how cleanly we can divide the dataset into bsz parts.
     nbatch = input_data.size(0) // bsz
     # Trim off any extra elements that wouldn't cleanly fit (remainders).
@@ -131,7 +132,8 @@ test_in, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
 ###############################################################################
 
 # ntokens = len(corpus.dictionary)
-ntokens = 2
+ntokens = corpus.length
+#import pdb; pdb.set_trace()
 #model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.tied)
 model = model.RNNModel(args.model, ntokens, seq_len * 5, args.nhid, args.nlayers, args.dropout, args.tied)
 if args.cuda:
@@ -181,13 +183,13 @@ def evaluate(input_data, target_data):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0.0
-    ntokens = 2
+    ntokens = corpus.length
     correct = 0.0
     total = 0.0
     hidden = model.init_hidden(args.batch_size)
     # hidden = model.init_hidden(eval_batch_size)
     # for i in range(0, data_source.size(0) - 1, args.bptt):
-    # import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
         data, targets = get_batch(input_data, target_data, i)
         data = data.squeeze(3)
@@ -208,7 +210,7 @@ def train():
     model.train()
     total_loss = 0.0
     start_time = time.time()
-    ntokens = 2
+    ntokens = corpus.length
     hidden = model.init_hidden(args.batch_size)
     
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
@@ -255,7 +257,8 @@ best_val_loss = None
 
 # At any point you can hit Ctrl + C to break out of training early.
 try:
-    for epoch in range(1, args.epochs+1):
+    for epoch in range(1, 1000):
+    #for epoch in range(1, args.epochs+1):
         epoch_start_time = time.time()
         print("Starting training for epoch {}".format(epoch))
         train()

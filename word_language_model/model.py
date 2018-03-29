@@ -31,7 +31,6 @@ class RNNModel(nn.Module):
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
             self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
         self.decoder = nn.Linear(nhid, ntoken)
-        #self.sigmoid = nn.Sigmoid()
 
         # Optionally tie weights as in:
         # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
@@ -57,7 +56,7 @@ class RNNModel(nn.Module):
         self.decoder.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, input, hidden):
-        # import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         output, hidden = self.rnn(input, hidden)
         #output = self.drop(output)
         # output = output[-1] # Take the last output

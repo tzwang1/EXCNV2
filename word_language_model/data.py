@@ -5,7 +5,7 @@ import numpy as np
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
 
-all_targets = ['No', 'Yes']
+all_targets = ['gain', 'neutral', 'loss']
 n_targets = len(all_targets)
 
 # Finds base index from all_bases
@@ -97,17 +97,17 @@ def load(num, input_path, target_path, seq_len):
                             rd_tensor = np.array([[[int(in_read_depth)]]])
                             x[cur_num][cur_seq_len] = np.concatenate((seq_tensor, rd_tensor),2)
                             # Sets cnv_in_seq to 'Yes' if there is a CNV between start and end
-                            if(tar_cnv == 'Yes'):
-                                cnv_in_seq = 'Yes'
-                            else:
-                                cnv_in_seq='No'
+                            # if(tar_cnv == ''):
+                            #     cnv_in_seq = 'Yes'
+                            # else:
+                            #     cnv_in_seq='No'
                             
                             cur_seq_len+=1
 
                             # When cur_seq_len is equal to seq_len set y and increment cur_num
                             if(cur_seq_len == seq_len):
-
-                                y[cur_num] = target_to_one_hot(cnv_in_seq)
+                                #import pdb; pdb.set_trace()
+                                y[cur_num] = target_to_one_hot(tar_cnv)
                                 cur_seq_len = 0
                                 cur_num+=1
                                 cnv_in_seq = False
@@ -203,6 +203,7 @@ class Corpus(object):
         # self.train = self.tokenize(os.path.join(path, 'train.txt'))
         # self.valid = self.tokenize(os.path.join(path, 'valid.txt'))
         # self.test = self.tokenize(os.path.join(path, 'test.txt'))
+        self.length = n_targets
         train_in_txt = "data/input_train.out"
         train_tar_txt = "data/target_train.out"
 
@@ -243,8 +244,8 @@ class Corpus(object):
             # test_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved test data")
-            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
-            save_data(test_x,test_y, test_in_path, test_tar_path)
+            #test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
+            #save_data(test_x,test_y, test_in_path, test_tar_path)
 
         # print(torch.from_numpy(x).shape)
         train_in = torch.from_numpy(train_x).float()
@@ -253,18 +254,24 @@ class Corpus(object):
         val_in = torch.from_numpy(val_x).float()
         val_tar = torch.from_numpy(val_y).float()
 
-        test_in = torch.from_numpy(test_x).float()
-        test_tar = torch.from_numpy(test_y).float()
-    
+        # test_in = torch.from_numpy(test_x).float()
+        # test_tar = torch.from_numpy(test_y).float()
+
         # Flatten data
         self.train_in = train_in.view(train_in.shape[0], -1)
         self.train_tar = train_tar.view(train_tar.shape[0], -1)
 
-        self.val_in = val_in.view(val_in.shape[0], -1)
-        self.val_tar = val_tar.view(val_tar.shape[0], -1)
+        self.val_in = train_in.view(train_in.shape[0], -1)
+        self.val_tar = train_tar.view(train_tar.shape[0], -1)
 
-        self.test_in = test_in.view(test_in.shape[0], -1)
-        self.test_tar = test_tar.view(test_tar.shape[0], -1)
+        self.test_in = train_in.view(train_in.shape[0], -1)
+        self.test_tar = train_tar.view(train_tar.shape[0], -1)
+
+        # self.val_in = val_in.view(val_in.shape[0], -1)
+        # self.val_tar = val_tar.view(val_tar.shape[0], -1)
+
+        # self.test_in = test_in.view(test_in.shape[0], -1)
+        # self.test_tar = test_tar.view(test_tar.shape[0], -1)
 
         # self.train_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
         # self.train_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
