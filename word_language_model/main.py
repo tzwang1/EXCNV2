@@ -251,8 +251,8 @@ def train():
         start_time = time.time()
 
 # Loop over epochs.
-lr = args.lr
-# lr = 0.001
+#lr = args.lr
+lr = 0.001
 best_val_loss = None
 
 # At any point you can hit Ctrl + C to break out of training early.
