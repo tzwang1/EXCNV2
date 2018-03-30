@@ -92,10 +92,14 @@ def calculate_mini_window(window, mini_window_size):
 
 def load(num, input_path, target_path, window_size, mini_window_size):
     # input_ = np.loadtxt(input_path, dtype=str)
-    num_blocks = 20
     #targets = np.loadtxt(target_path, dtype=str)
+    
+    if(num == None):
+        input_ = pd.read_csv(input_path, delimiter="\t")
+    else:
+        input_ = pd.read_csv(input_path, delimiter="\t", nrows=num)
+
     targets = np.genfromtxt(target_path, dtype=None)
-    input_ = pd.read_csv(input_path, delimiter="\t", nrows=num)
     input_ = np.asarray(input_)
 
     # with open(input_path) as infile:
@@ -394,15 +398,6 @@ class Corpus(object):
         # self.test_in = test_x
         # self.test_tar = test_y
 
-        # Flatten data
-        # self.train_in = train_in.view(train_in.shape[0], -1)
-        # self.train_tar = train_tar.view(train_tar.shape[0], -1)
-
-        # # self.val_in = val_in.view(val_in.shape[0], -1)
-        # # self.val_tar = val_tar.view(val_tar.shape[0], -1)
-
-        # # self.test_in = test_in.view(test_in.shape[0], -1)
-        # # self.test_tar = test_tar.view(test_tar.shape[0], -1)
 
         
 

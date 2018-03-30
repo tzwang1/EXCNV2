@@ -32,7 +32,7 @@ from torch.autograd import Variable
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, dropout=0.5, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, ninp, nhid, fcinp, nlayers, dropout=0.5, tie_weights=False):
         super(RNNModel, self).__init__()
 
         #import pdb; pdb.set_trace()
@@ -42,7 +42,7 @@ class RNNModel(nn.Module):
         conv_out_channel = 5
         conv_kernel_size = 5
         conv_pooling_kernel = 2
-        fc_inp_size = 10
+        fc_inp_size = fcinp
 
         self.conv2d = nn.Conv2d(1, conv_out_channel, (conv_kernel_size, 2))
         self.maxpool = nn.MaxPool1d(conv_pooling_kernel)
@@ -89,7 +89,7 @@ class RNNModel(nn.Module):
 
     def forward(self, x, hidden, gap):
         input_list = []
-        # x is in shape (num // batch x batch x seq_len x 2)
+        # x is in shape (num // batch x batch x seq_len x 2)  
         for i in range(len(x)):
             input_ = x[i]
             input_ = input_.unsqueeze(1)

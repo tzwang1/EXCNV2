@@ -12,25 +12,25 @@ import data
 import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
-parser.add_argument('--input_train', type=str, default='./data/input_train.out',
-                    help='location of the input corpus')
-parser.add_argument('--target_train', type=str, default='./data/target_train.out',
-                    help='location of the target corpus')
-parser.add_argument('--input_val', type=str, default='./data/input_val.out',
-                    help='location of the input corpus')
-parser.add_argument('--target_val', type=str, default='./data/target_val.out',
-                    help='location of the target corpus')
-parser.add_argument('--input_test', type=str, default='./data/input_test.out',
-                    help='location of the input corpus')
-parser.add_argument('--target_test', type=str, default='./data/target_test.out',
-                    help='location of the target corpus')
+# parser.add_argument('--input_train', type=str, default='./data/input_train.out',
+#                     help='location of the input corpus')
+# parser.add_argument('--target_train', type=str, default='./data/target_train.out',
+#                     help='location of the target corpus')
+# parser.add_argument('--input_val', type=str, default='./data/input_val.out',
+#                     help='location of the input corpus')
+# parser.add_argument('--target_val', type=str, default='./data/target_val.out',
+#                     help='location of the target corpus')
+# parser.add_argument('--input_test', type=str, default='./data/input_test.out',
+#                     help='location of the input corpus')
+# parser.add_argument('--target_test', type=str, default='./data/target_test.out',
+#                     help='location of the target corpus')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
 parser.add_argument('--size', type=int, default=5,
                     help='size of data')
 # parser.add_argument('--emsize', type=int, default=200,
 #                     help='size of word embeddings')
-parser.add_argument('--num', type=int, default=100000,
+parser.add_argument('--num', type=int, default=100000000,
                     help='number of training examples')
 parser.add_argument('--win_s', type=int, default=10000,
                     help='length of sequence')
@@ -42,6 +42,8 @@ parser.add_argument('--nlayers', type=int, default=2,
                     help='number of layers')
 parser.add_argument('--lr', type=float, default=20,
                     help='initial learning rate')
+parser.add_argument('--fcinp', type=int, default=100,
+                    help='fully connected layer input size')
 parser.add_argument('--clip', type=float, default=0.25,
                     help='gradient clipping')
 parser.add_argument('--epochs', type=int, default=40,
@@ -133,7 +135,7 @@ test_in, test_gaps, test_tar = batchify(corpus.test_in, corpus.test_tar, args.ba
 ntokens = corpus.length
 
 # conv = model.ConvNet()
-model = model.RNNModel(args.model, ntokens, (args.win_s // args.mini_win_s) * 2, args.nhid, args.nlayers, args.dropout, args.tied)
+model = model.RNNModel(args.model, ntokens, (args.win_s // args.mini_win_s) * 2, args.nhid, args.fcinp, args.nlayers, args.dropout, args.tied)
 if args.cuda:
     model.cuda()
 
@@ -198,7 +200,6 @@ def evaluate(input_data, gap_data, target_data):
         total_loss += len(data) * criterion(output.view(-1, ntokens), targets.long().view(-1)).data
         hidden = repackage_hidden(hidden)
 
-        #import pdb; pdb.set_trace()
         pred = output.data.max(2, keepdim=True)[1].squeeze(-1)
         correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
         total += output.shape[0] * output.shape[1]
@@ -213,7 +214,7 @@ def train():
     hidden = model.init_hidden(args.batch_size)
     
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
-        print("Starting training iteration {}".format(i))
+        # print("Starting training iteration {}".format(i))
         data, gap, targets = get_batch(train_in, train_gaps, train_tar, i)
 
         # Starting each batch, we detach the hidden state from how it was previously produced.
@@ -246,23 +247,22 @@ def train():
             start_time = time.time()
 
 # Loop over epochs.
-#lr = args.lr
-lr = 0.001
+lr = args.lr
 best_val_loss = None
 
 # At any point you can hit Ctrl + C to break out of training early.
 try:
     for epoch in range(1, args.epochs+1):
         epoch_start_time = time.time()
-        print("Starting training for epoch {}".format(epoch))
+        # print("Starting training for epoch {}".format(epoch))
         train()
         #import pdb; pdb.set_trace()
         # val_loss = evaluate(val_data)
         val_loss, correct = evaluate(val_in, val_gaps, val_tar.long())
         print('-' * 89)
-        print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
-                'correct {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
-                                           val_loss, correct))
+        print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.4f} | '
+                'correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
+                                             val_loss, correct))
         print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
         if not best_val_loss or val_loss < best_val_loss:
