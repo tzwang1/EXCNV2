@@ -67,7 +67,11 @@ def calculate_target_features(chrom, start, targets):
     #import pdb; pdb.set_trace()
     found = False
     for i in range(len(targets)):
-        if(chrom == targets[i][0]):
+        try:
+            tar_chrom = int(targets[i][0])
+        except:
+            continue
+        if(chrom == tar_chrom):
             if(start >= targets[i][1] and start < targets[i][2]):
                 target = target_to_index(targets[i][3])
                 found = True
@@ -88,7 +92,7 @@ def calculate_mini_window(window, mini_window_size):
 
 def load(num, input_path, target_path, window_size, mini_window_size):
     # input_ = np.loadtxt(input_path, dtype=str)
-    num_blocks = 20
+    num_blocks = 50
     #targets = np.loadtxt(target_path, dtype=str)
     targets = np.genfromtxt(target_path, dtype=None)
 
