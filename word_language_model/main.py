@@ -226,7 +226,7 @@ def train():
         loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
         loss.backward()
-        #optimizer.step()
+        optimizer.step()
 
         # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
         torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
