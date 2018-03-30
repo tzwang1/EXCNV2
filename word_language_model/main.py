@@ -60,7 +60,7 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
-parser.add_argument('--log-interval', type=int, default=200, metavar='N',
+parser.add_argument('--log_interval', type=int, default=200, metavar='N',
                     help='report interval')
 parser.add_argument('--save', type=str,  default='model.pt',
                     help='path to save the final model')
@@ -216,7 +216,6 @@ def train():
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
         # print("Starting training iteration {}".format(i))
         data, gap, targets = get_batch(train_in, train_gaps, train_tar, i)
-
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
         hidden = repackage_hidden(hidden)
@@ -234,7 +233,7 @@ def train():
             p.data.add_(-lr, p.grad.data)
 
         total_loss += loss.data
-        if batch % 10 == 0 and batch > 0:
+        if batch % args.log_interval == 0 and batch > 0:
             _loss, correct = evaluate(train_in, train_gaps, train_tar.long())
 
             cur_loss = total_loss[0] / args.log_interval
