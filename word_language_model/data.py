@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+import pandas as pd
 import pickle
 
 all_bases = ['A', 'T', 'C', 'G']
@@ -80,8 +81,12 @@ def calculate_mini_window(window, mini_window_size):
     return [int(window[0][1]), np.array(features)]
 
 def load(num, input_path, target_path, window_size, mini_window_size):
-    input_ = np.loadtxt(input_path, dtype=str)
-    targets = np.loadtxt(target_path, dtype=str)
+    # input_ = np.loadtxt(input_path, dtype=str)
+    # targets = np.loadtxt(target_path, dtype=str)
+    input_ = pd.read_csv(input_path, dtype=str)
+    input_ = np.asarray(input_)
+    targets = pd.read_csv(target_path, dtype=str)
+    targets = np.asarray(targets)
     windows = []
     tmp_window, count = [], 0
     
