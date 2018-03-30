@@ -1,35 +1,37 @@
 import torch.nn as nn
 from torch.autograd import Variable
 
+class ConvModel(nn.Module):
+    def __init__(self, nipn, nhi)
+
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
     def __init__(self, rnn_type, ntoken, ninp, nhid, nlayers, dropout=0.5, tie_weights=False):
         super(RNNModel, self).__init__()
 
+        #import pdb; pdb.set_trace()
         #self.drop = nn.Dropout(dropout)
         # # TODO: add convlutional layer
-        # self.downconv1 = nn.Sequential(
-        #     nn.Conv2d(1, 32, kernel_size=5, padding=5 // 2),
-        #     nn.MaxPool2d(2),
-        #     nn.BatchNorm2d(32),
-        #     nn.ReLU())
+        
+        self.conv2d = nn.Sequential(
 
-        # self.upconv1 = nn.Sequential(
-        #     nn.Conv2d(32, 1, kernel_size=5, padding=5 // 2),
-        #     nn.Upsample(scale_factor=2),
-        #     nn.BatchNorm2d(1),
-        #     nn.ReLU())
+            nn.Conv2d(1, 6, kernel_size=(10, 3)),
+            nn.MaxPool2d(2),
+            nn.Linear(5))
+
         # self.encoder = nn.Embedding(ntoken, ninp)
         if rnn_type in ['LSTM', 'GRU']:
-            self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
+            # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
+            self.rnn = getattr(nn, rnn_type)(nhid, nhid, nlayers, dropout=dropout)
         else:
             try:
                 nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
             except KeyError:
                 raise ValueError( """An invalid option for `--model` was supplied,
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
-            self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
+            # self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
+            self.rnn = nn.RNN(nhid, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
         self.decoder = nn.Linear(nhid, ntoken)
 
         # Optionally tie weights as in:
@@ -55,8 +57,8 @@ class RNNModel(nn.Module):
         self.decoder.bias.data.fill_(0)
         self.decoder.weight.data.uniform_(-initrange, initrange)
 
-    def forward(self, input, hidden):
-        #import pdb; pdb.set_trace()
+    def forward(self, input, hidden, gaps):
+        # output = self.conv1d(input)
         output, hidden = self.rnn(input, hidden)
         #output = self.drop(output)
         # output = output[-1] # Take the last output

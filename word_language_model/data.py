@@ -81,12 +81,20 @@ def calculate_mini_window(window, mini_window_size):
     return [int(window[0][1]), np.array(features)]
 
 def load(num, input_path, target_path, window_size, mini_window_size):
-    # input_ = np.loadtxt(input_path, dtype=str)
-    # targets = np.loadtxt(target_path, dtype=str)
-    input_ = pd.read_csv(input_path, delimiter="\t")
-    input_ = np.asarray(input_)
-    targets = pd.read_csv(target_path, delimiter="\t")
-    targets = np.asarray(targets)
+    input_ = np.loadtxt(input_path, dtype=str)
+    # num_blocks = 10
+    targets = np.loadtxt(target_path, dtype=str)
+
+    # num_lines = sum(1 for line in open(input_path))
+    # block_size = num_lines // num_blocks
+    
+    # all_windows = []
+    # for num_blocks
+    
+    # input_ = pd.read_csv(input_path, delimiter="\t")
+    # input_ = np.asarray(input_)
+    # targets = pd.read_csv(target_path, delimiter="\t")
+    # targets = np.asarray(targets)
     windows = []
     tmp_window, count = [], 0
     
@@ -349,10 +357,10 @@ class Corpus(object):
         self.train_tar = train_y
 
         self.val_in = train_x
-        self.val_tar = train_x
+        self.val_tar = train_y
 
         self.test_in = train_x
-        self.test_tar = train_x
+        self.test_tar = train_y
     
         # self.val_in = val_x
         # self.val_tar = val_y
