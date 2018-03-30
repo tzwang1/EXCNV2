@@ -258,7 +258,7 @@ try:
         train()
         #import pdb; pdb.set_trace()
         # val_loss = evaluate(val_data)
-        val_loss, correct = evaluate(val_in, val_gaps, val_tar.long())
+        val_loss, correct = evaluate(test_in, test_gaps, test_tar.long())
         print('-' * 89)
         print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.5f} | '
                 'val correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
