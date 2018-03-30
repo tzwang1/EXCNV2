@@ -302,7 +302,7 @@ class Corpus(object):
         # self.test = self.tokenize(os.path.join(path, 'test.txt'))
         self.length = n_targets
         # train_in_txt = "data/input_train.out"
-        train_in_txt = "data/small_input_train.out"
+        train_in_txt = "data/input_train.out"
         train_tar_txt = "data/target_train.out"
 
         val_in_txt = "data/input_val.out"
