@@ -92,7 +92,7 @@ def calculate_mini_window(window, mini_window_size):
 
 def load(num, input_path, target_path, window_size, mini_window_size):
     # input_ = np.loadtxt(input_path, dtype=str)
-    num_blocks = 50
+    num_blocks = 40
     #targets = np.loadtxt(target_path, dtype=str)
     targets = np.genfromtxt(target_path, dtype=None)
 
