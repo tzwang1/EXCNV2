@@ -63,12 +63,18 @@ def calculate_mini_window_feature(mini_window):
     gc_ratio = gc_num * 1.0 / len(mini_window)
     return [depth, gc_ratio]
 
-def calculate_target_features(start, targets):
+def calculate_target_features(chrom, start, targets):
+    #import pdb; pdb.set_trace()
+    found = False
     for i in range(len(targets)):
-        if(start >= int(targets[i][1]) and start < int(targets[i][2])):
-            target = target_to_index(targets[i][3])
-        else:
-            target = 3
+        if(chrom == targets[i][0]):
+            if(start >= targets[i][1] and start < targets[i][2]):
+                target = target_to_index(targets[i][3])
+                found = True
+                break
+    if not found:
+        target = 3
+
     return target
 
 
@@ -81,15 +87,16 @@ def calculate_mini_window(window, mini_window_size):
     return [int(window[0][1]), np.array(features)]
 
 def load(num, input_path, target_path, window_size, mini_window_size):
-    input_ = np.loadtxt(input_path, dtype=str)
-    # num_blocks = 10
-    targets = np.loadtxt(target_path, dtype=str)
+    # input_ = np.loadtxt(input_path, dtype=str)
+    num_blocks = 10
+    #targets = np.loadtxt(target_path, dtype=str)
+    targets = np.genfromtxt(target_path, dtype=None)
 
-    # num_lines = sum(1 for line in open(input_path))
-    # block_size = num_lines // num_blocks
+    num_lines = sum(1 for line in open(input_path))
+    chunk_size = num_lines // num_blocks
     
-    # all_windows = []
-    # for num_blocks
+    all_windows_features = []
+    all_windows_targets = []
     
     # input_ = pd.read_csv(input_path, delimiter="\t")
     # input_ = np.asarray(input_)
@@ -97,32 +104,37 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     # targets = np.asarray(targets)
     windows = []
     tmp_window, count = [], 0
-    
-    #for i in range(num):
-    for i in range(len(input_)):
-        if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
-            tmp_window.append(input_[i])
-            count += 1 
-            if count == window_size:
-                windows.append(tmp_window)
-                tmp_window, count = [], 0
-    
-    windows_features = []
-    windows_targets = []
-    for i in range(len(windows)):
-        features = calculate_mini_window(windows[i], mini_window_size)
-        windows_features.append(features)
-        target = calculate_target_features(features[0], targets)
-        windows_targets.append(target)
-    
-    gaps = np.zeros(len(windows_features))
-    for i in range(1, len(windows_features)):
-        gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
+    for input_ in pd.read_csv(input_path, delimiter="\t", chunksize=chunk_size):
+        print("Processing first chunk")
+        input_ = np.asarray(input_)
+        for i in range(len(input_)):
+            if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
+                tmp_window.append(input_[i])
+                count += 1 
+                if count == window_size:
+                    windows.append(tmp_window)
+                    tmp_window, count = [], 0
+        
+        windows_features = []
+        windows_targets = []
+        for i in range(len(windows)):
+            chrom = windows[i][0][0]
+            features = calculate_mini_window(windows[i], mini_window_size)
+            windows_features.append(features)
+            target = calculate_target_features(chrom, features[0], targets)
+            windows_targets.append(target)
+        
+        gaps = np.zeros(len(windows_features))
+        for i in range(1, len(windows_features)):
+            gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
 
-    for i in range(len(windows_features)):
-        windows_features[i][0] = gaps[i]
+        for i in range(len(windows_features)):
+            windows_features[i][0] = gaps[i]
+    
+        all_windows_features += windows_features
+        all_windows_targets += windows_targets
 
-    return windows_features, windows_targets
+    return all_windows_features, all_windows_targets
 
     # x = np.zeros((num, seq_len, 5))
     # y = np.zeros((num, 1))
