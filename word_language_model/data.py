@@ -92,18 +92,20 @@ def calculate_mini_window(window, mini_window_size):
 
 def load(num, input_path, target_path, window_size, mini_window_size):
     # input_ = np.loadtxt(input_path, dtype=str)
-    num_blocks = 40
+    num_blocks = 20
     #targets = np.loadtxt(target_path, dtype=str)
     targets = np.genfromtxt(target_path, dtype=None)
+    input_ = pd.read_csv(input_path, delimiter="\t", nrows=num)
+    input_ = np.asarray(input_)
 
-    with open(input_path) as infile:
-        num_lines = sum(1 for line in infile)
+    # with open(input_path) as infile:
+    #     num_lines = sum(1 for line in infile)
 
-    chunk_size = num_lines // num_blocks
-    chunks = 1
+    # chunk_size = num_lines // num_blocks
+    # chunks = 1
     
-    all_windows_features = []
-    all_windows_targets = []
+    # all_windows_features = []
+    # all_windows_targets = []
     
     # input_ = pd.read_csv(input_path, delimiter="\t")
     # input_ = np.asarray(input_)
@@ -111,18 +113,18 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     # targets = np.asarray(targets)
     windows = []
     tmp_window, count = [], 0
-    for input_ in pd.read_csv(input_path, delimiter="\t", chunksize=chunk_size):
-        print("Processing chunk: {}".format(chunks))
-        chunks+=1
-        input_ = np.asarray(input_)
-        for i in range(len(input_)):
-            if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
-                tmp_window.append(input_[i])
-                count += 1 
-                if count == window_size:
-                    windows.append(tmp_window)
-                    tmp_window, count = [], 0
-        
+    # for input_ in pd.read_csv(input_path, delimiter="\t", chunksize=chunk_size):
+        # print("Processing chunk: {}".format(chunks))
+        # chunks+=1
+        # input_ = np.asarray(input_)
+    for i in range(len(input_)):
+        if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
+            tmp_window.append(input_[i])
+            count += 1 
+            if count == window_size:
+                windows.append(tmp_window)
+                tmp_window, count = [], 0
+    
         windows_features = []
         windows_targets = []
         for i in range(len(windows)):
@@ -138,11 +140,12 @@ def load(num, input_path, target_path, window_size, mini_window_size):
 
         for i in range(len(windows_features)):
             windows_features[i][0] = gaps[i]
-    
-        all_windows_features += windows_features
-        all_windows_targets += windows_targets
 
-    return all_windows_features, all_windows_targets
+    # all_windows_features += windows_features
+    # all_windows_targets += windows_targets
+    return windows_features, windows_targets
+
+    # return all_windows_features, all_windows_targets
 
     # x = np.zeros((num, seq_len, 5))
     # y = np.zeros((num, 1))
