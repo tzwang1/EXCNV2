@@ -38,9 +38,11 @@ class RNNModel(nn.Module):
         #import pdb; pdb.set_trace()
         #self.drop = nn.Dropout(dropout)
         # # TODO: add convlutional layer
-    
+
+        stride = 0
+        padding = 0
         conv_out_channel = 5
-        conv_kernel_size = 5
+        conv_kernel_size = 4
         conv_pooling_kernel = 2
         fc_inp_size = fcinp
 
@@ -91,6 +93,7 @@ class RNNModel(nn.Module):
         input_list = []
         # x is in shape (num // batch x batch x seq_len x 2)  
         for i in range(len(x)):
+            import pdb; pdb.set_trace()
             input_ = x[i]
             input_ = input_.unsqueeze(1)
             input_ = self.conv2d(input_)

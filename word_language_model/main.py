@@ -240,7 +240,7 @@ def train():
             cur_loss = total_loss[0] / args.log_interval
             elapsed = time.time() - start_time
             print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
-                    'loss {:5.8f} |  correct {:8.5f}'.format(
+                    'loss {:5.8f} |  train correct {:8.5f}'.format(
                 epoch, batch, len(train_in) // args.bptt, lr,
                 elapsed * 1000 / args.log_interval, cur_loss, correct))
             total_loss = 0
@@ -261,7 +261,7 @@ try:
         val_loss, correct = evaluate(val_in, val_gaps, val_tar.long())
         print('-' * 89)
         print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.5f} | '
-                'correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
+                'val correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
                                              val_loss, correct))
         print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
@@ -271,7 +271,9 @@ try:
             best_val_loss = val_loss
         else:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
-            lr /= 4.0
+            #lr /= 4.0
+            lr = lr
+
 except KeyboardInterrupt:
     print('-' * 89)
     print('Exiting from training early')
@@ -283,6 +285,6 @@ with open(args.save, 'rb') as f:
 # Run on test data.
 test_loss, correct = evaluate(test_in, test_gaps, test_tar.long())
 print('=' * 89)
-print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
-    test_loss, math.exp(test_loss)))
+print('| End of training | test loss {:5.2f} | test correct {:8.2f}'.format(
+    test_loss, correct))
 print('=' * 89)
