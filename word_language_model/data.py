@@ -317,7 +317,7 @@ class Corpus(object):
             # test_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved test data")
-            test_x, test_y = load_data(test_in_txt, test_tar_txt, window_size, mini_window_size)
+            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
             save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
