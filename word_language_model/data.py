@@ -96,6 +96,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
         num_lines = sum(1 for line in infile)
 
     chunk_size = num_lines // num_blocks
+    chunks = 1
     
     all_windows_features = []
     all_windows_targets = []
@@ -107,7 +108,8 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     windows = []
     tmp_window, count = [], 0
     for input_ in pd.read_csv(input_path, delimiter="\t", chunksize=chunk_size):
-        print("Processing chunk")
+        print("Processing chunk: {}".format(chunks))
+        chunks+=1
         input_ = np.asarray(input_)
         for i in range(len(input_)):
             if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
