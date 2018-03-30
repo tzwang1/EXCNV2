@@ -117,6 +117,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
         # print("Processing chunk: {}".format(chunks))
         # chunks+=1
         # input_ = np.asarray(input_)
+    print("Getting windows features")
     for i in range(len(input_)):
         if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
             tmp_window.append(input_[i])
@@ -125,21 +126,23 @@ def load(num, input_path, target_path, window_size, mini_window_size):
                 windows.append(tmp_window)
                 tmp_window, count = [], 0
     
-        windows_features = []
-        windows_targets = []
-        for i in range(len(windows)):
-            chrom = windows[i][0][0]
-            features = calculate_mini_window(windows[i], mini_window_size)
-            windows_features.append(features)
-            target = calculate_target_features(chrom, features[0], targets)
-            windows_targets.append(target)
-        
-        gaps = np.zeros(len(windows_features))
-        for i in range(1, len(windows_features)):
-            gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
+    print("Calculating mini window features")
+    windows_features = []
+    windows_targets = []
+    for i in range(len(windows)):
+        chrom = windows[i][0][0]
+        features = calculate_mini_window(windows[i], mini_window_size)
+        windows_features.append(features)
+        target = calculate_target_features(chrom, features[0], targets)
+        windows_targets.append(target)
+    
+    print("Calculating gaps")
+    gaps = np.zeros(len(windows_features))
+    for i in range(1, len(windows_features)):
+        gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
 
-        for i in range(len(windows_features)):
-            windows_features[i][0] = gaps[i]
+    for i in range(len(windows_features)):
+        windows_features[i][0] = gaps[i]
 
     # all_windows_features += windows_features
     # all_windows_targets += windows_targets
