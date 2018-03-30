@@ -89,6 +89,7 @@ class RNNModel(nn.Module):
 
     def forward(self, x, hidden, gap):
         input_list = []
+        # x is in shape (num // batch x batch x seq_len x 2)
         for i in range(len(x)):
             input_ = x[i]
             input_ = input_.unsqueeze(1)
