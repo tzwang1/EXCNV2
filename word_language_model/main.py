@@ -226,7 +226,7 @@ def train():
         loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
         loss.backward()
-        optimizer.step()
+        #optimizer.step()
 
         # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
         torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
@@ -260,7 +260,7 @@ try:
         # val_loss = evaluate(val_data)
         val_loss, correct = evaluate(val_in, val_gaps, val_tar.long())
         print('-' * 89)
-        print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.4f} | '
+        print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.5f} | '
                 'correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
                                              val_loss, correct))
         print('-' * 89)

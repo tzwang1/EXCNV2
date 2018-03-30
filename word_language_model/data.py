@@ -93,7 +93,7 @@ def calculate_mini_window(window, mini_window_size):
 def load(num, input_path, target_path, window_size, mini_window_size):
     # input_ = np.loadtxt(input_path, dtype=str)
     #targets = np.loadtxt(target_path, dtype=str)
-    
+
     if(num == None):
         input_ = pd.read_csv(input_path, delimiter="\t")
     else:
@@ -345,33 +345,33 @@ class Corpus(object):
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
-        # try:
-        #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
-        #     # val_x = np.load('data/fake_in.npy')
-        #     # val_y = np.load('data/fake_tar.npy')
-        # except:
-        #     print("Could not load presaved validation data")
-        #     val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
-        #     save_data(val_x, val_y, val_in_path, val_tar_path)
+        try:
+            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+            # val_x = np.load('data/fake_in.npy')
+            # val_y = np.load('data/fake_tar.npy')
+        except:
+            print("Could not load presaved validation data")
+            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
+            save_data(val_x, val_y, val_in_path, val_tar_path)
 
-        # try:
-        #     test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
-        #     # test_x = np.load('data/fake_in.npy')
-        #     # test_y = np.load('data/fake_tar.npy')
-        # except:
-        #     print("Could not load presaved test data")
-        #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
-        #     save_data(test_x,test_y, test_in_path, test_tar_path)
+        try:
+            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+            # test_x = np.load('data/fake_in.npy')
+            # test_y = np.load('data/fake_tar.npy')
+        except:
+            print("Could not load presaved test data")
+            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
+            save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
         unique, counts = np.unique(train_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
 
-        # unique, counts = np.unique(val_y, return_counts=True)
-        # print("VAL TAR: {}".format(dict(zip(unique, counts))))
+        unique, counts = np.unique(val_y, return_counts=True)
+        print("VAL TAR: {}".format(dict(zip(unique, counts))))
 
-        # unique, counts = np.unique(test_y, return_counts=True)
-        # print("TEST TAR: {}".format(dict(zip(unique, counts))))
+        unique, counts = np.unique(test_y, return_counts=True)
+        print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
         # train_in = torch.from_numpy(train_x).float()
         # train_tar = torch.from_numpy(train_y).float()
@@ -386,17 +386,17 @@ class Corpus(object):
         self.train_in = train_x
         self.train_tar = train_y
 
-        self.val_in = train_x
-        self.val_tar = train_y
+        # self.val_in = train_x
+        # self.val_tar = train_y
 
-        self.test_in = train_x
-        self.test_tar = train_y
+        # self.test_in = train_x
+        # self.test_tar = train_y
     
-        # self.val_in = val_x
-        # self.val_tar = val_y
+        self.val_in = val_x
+        self.val_tar = val_y
 
-        # self.test_in = test_x
-        # self.test_tar = test_y
+        self.test_in = test_x
+        self.test_tar = test_y
 
 
         
