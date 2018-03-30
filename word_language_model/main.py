@@ -9,8 +9,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 import data
-from data import rearrange
-import model
+import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
 parser.add_argument('--input_train', type=str, default='./data/input_train.out',
@@ -27,10 +26,16 @@ parser.add_argument('--target_test', type=str, default='./data/target_test.out',
                     help='location of the target corpus')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
-parser.add_argument('--emsize', type=int, default=5,
+parser.add_argument('--size', type=int, default=5,
                     help='size of data')
 # parser.add_argument('--emsize', type=int, default=200,
 #                     help='size of word embeddings')
+parser.add_argument('--num', type=int, default=100000,
+                    help='number of training examples')
+parser.add_argument('--win_s', type=int, default=10000,
+                    help='length of sequence')
+parser.add_argument('--mini_win_s', type=int, default=1000,
+                    help='length of small window')
 parser.add_argument('--nhid', type=int, default=200,
                     help='number of hidden units per layer')
 parser.add_argument('--nlayers', type=int, default=2,
@@ -44,7 +49,7 @@ parser.add_argument('--epochs', type=int, default=40,
 parser.add_argument('--batch_size', type=int, default=20, metavar='N',
                     help='batch size')
 parser.add_argument('--bptt', type=int, default=50,
-                    help='sequence length')
+                    help='bptt length')
 parser.add_argument('--dropout', type=float, default=0.2,
                     help='dropout applied to layers (0 = no dropout)')
 parser.add_argument('--tied', action='store_true',
@@ -74,10 +79,9 @@ if torch.cuda.is_available():
 # corpus = data.Corpus(args.data)
 # num = 100000
 # seq_len = 30
-num = 2000000
-seq_len = 100
+num = args.num
 
-corpus = data.Corpus(args.input_train, args.target_train, args.input_val, args.target_val, args.input_test, args.target_test, num, seq_len)
+corpus = data.Corpus(num, args.win_s, args.mini_win_s)
 
 # Starting from sequential data, batchify arranges the dataset into columns.
 # For instance, with the alphabet as the sequence and batch size 4, we'd get
@@ -91,56 +95,51 @@ corpus = data.Corpus(args.input_train, args.target_train, args.input_val, args.t
 # dependence of e. g. 'g' on 'f' can not be learned, but allows more efficient
 # batch processing.
 
-def batchify(input_data, target_data, bsz):
+def batchify(input_data_, target_data, bsz):
     print("Batchifying data....")
-    #import pdb; pdb.set_trace()
+    input_gaps = [data[0] for data in input_data_]
+    input_data = [data[1] for data in input_data_]
+
+    input_gaps = torch.FloatTensor(input_gaps)
+    input_data = torch.FloatTensor(input_data)
+    target_data = torch.FloatTensor(target_data)
+
     # Work out how cleanly we can divide the dataset into bsz parts.
     nbatch = input_data.size(0) // bsz
     # Trim off any extra elements that wouldn't cleanly fit (remainders).
     input_data = input_data.narrow(0, 0, nbatch * bsz)
+    input_gaps = input_gaps.narrow(0, 0, nbatch * bsz)
     target_data = target_data.narrow(0, 0, nbatch * bsz)
     # Evenly divide the data across the bsz batches.
     input_data = input_data.view(input_data.shape[0] // bsz, bsz, input_data.shape[1], -1)
+    input_gaps = input_gaps.view(input_gaps.shape[0] // bsz, bsz)
     target_data = target_data.view(bsz, -1).t().contiguous()
     # if args.cuda:
     #     input_data = input_data.cuda()
     #     target_data = target_data.cuda()
-    return input_data, target_data
+    return input_data, input_gaps, target_data
 
-# def batchify(data, bsz):
-#     # Work out how cleanly we can divide the dataset into bsz parts.
-#     nbatch = data.size(0) // bsz
-#     # Trim off any extra elements that wouldn't cleanly fit (remainders).
-#     data = data.narrow(0, 0, nbatch * bsz)
-#     # Evenly divide the data across the bsz batches.
-#     data = data.view(bsz, -1).t().contiguous()
-#     if args.cuda:
-#         data = data.cuda()
-#     return data
 
 eval_batch_size = 10
-# train_data = batchify(corpus.train, args.batch_size)
-# val_data = batchify(corpus.valid, eval_batch_size)
-# test_data = batchify(corpus.test, eval_batch_size)
 
-train_in, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
-val_in, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
-test_in, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
+train_in, train_gaps, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
+val_in, val_gaps, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
+test_in, test_gaps, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
 
 ###############################################################################
 # Build the model
 ###############################################################################
 
-# ntokens = len(corpus.dictionary)
 ntokens = corpus.length
-#import pdb; pdb.set_trace()
-#model = model.RNNModel(args.model, ntokens, args.emsize, args.nhid, args.nlayers, args.dropout, args.tied)
-model = model.RNNModel(args.model, ntokens, seq_len * 5, args.nhid, args.nlayers, args.dropout, args.tied)
+
+# conv = model.ConvNet()
+model = model.RNNModel(args.model, ntokens, (args.win_s // args.mini_win_s) * 2, args.nhid, args.nlayers, args.dropout, args.tied)
 if args.cuda:
     model.cuda()
 
 criterion = nn.CrossEntropyLoss()
 # optimizer = optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
+# optimizer_conv = torch.optim.Adam(conv.parameters(), lr=1e-4, weight_decay=1e-5)
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 ###############################################################################
@@ -165,22 +164,23 @@ def repackage_hidden(h):
 # by the batchify function. The chunks are along dimension 0, corresponding
 # to the seq_len dimension in the LSTM.
 
-def get_batch(input_data, target_data, i, evaluation=False):
-    #import pdb; pdb.set_trace()
+def get_batch(input_data, gap_data, target_data, i, evaluation=False):
     sequence_len = min(args.bptt, len(input_data) - 1 - i)
     
     data = input_data[i:i+sequence_len]
+    gap = gap_data[i:i+sequence_len]
     target = target_data[i:i+sequence_len]
     # if args.cuda:
     #     data = data.cuda()
     #     target = target.cuda()
 
     data = Variable(data, volatile=evaluation)
+    gap = Variable(gap, volatile=evaluation)
     target = Variable(target)
 
-    return data, target
+    return data, gap, target
 
-def evaluate(input_data, target_data):
+def evaluate(input_data, gap_data, target_data):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0.0
@@ -189,22 +189,20 @@ def evaluate(input_data, target_data):
     total = 0.0
     hidden = model.init_hidden(args.batch_size)
     # hidden = model.init_hidden(eval_batch_size)
-    # for i in range(0, data_source.size(0) - 1, args.bptt):
-    #import pdb; pdb.set_trace()
+    # for i in range(0, data_source.size(0) - 1, args.bptt)
     for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
-        data, targets = get_batch(input_data, target_data, i)
-        data = data.squeeze(3)
-        
-        output, hidden = model(data, hidden)
+        data, gap, targets = get_batch(input_data, gap_data, target_data, i)
+
+        output, hidden = model(data, hidden, gap.float())
         
         total_loss += len(data) * criterion(output.view(-1, ntokens), targets.long().view(-1)).data
         hidden = repackage_hidden(hidden)
-    
-        pred = output.data.max(2, keepdim=True)[1]
+
+        #import pdb; pdb.set_trace()
+        pred = output.data.max(2, keepdim=True)[1].squeeze(-1)
         correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
         total += output.shape[0] * output.shape[1]
     return total_loss[0] / len(input_data), correct/total
-
 
 def train():
     # Turn on training mode which enables dropout.
@@ -216,17 +214,14 @@ def train():
     
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
         print("Starting training iteration {}".format(i))
-        data, targets = get_batch(train_in, train_tar, i)
-        # Rearrange data to be in the shape of seq_len x batch size x input size
-        data = data.squeeze(3)
+        data, gap, targets = get_batch(train_in, train_gaps, train_tar, i)
 
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
         hidden = repackage_hidden(hidden)
         model.zero_grad()
-        output, hidden = model(data, hidden)
- 
-        #import pdb; pdb.set_trace()
+
+        output, hidden = model(data, hidden, gap)
         loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
         loss.backward()
@@ -238,18 +233,17 @@ def train():
             p.data.add_(-lr, p.grad.data)
 
         total_loss += loss.data
-        _loss, correct = evaluate(train_in, train_tar.long())
+        if batch % 10 == 0 and batch > 0:
+            _loss, correct = evaluate(train_in, train_gaps, train_tar.long())
 
-        #import pdb; pdb.set_trace()
-        
-        cur_loss = total_loss[0] / args.log_interval
-        elapsed = time.time() - start_time
-        print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
-                'loss {:5.8f} |  correct {:8.5f}'.format(
-            epoch, batch, len(train_in) // args.bptt, lr,
-            elapsed * 1000 / args.log_interval, cur_loss, correct))
-        total_loss = 0
-        start_time = time.time()
+            cur_loss = total_loss[0] / args.log_interval
+            elapsed = time.time() - start_time
+            print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
+                    'loss {:5.8f} |  correct {:8.5f}'.format(
+                epoch, batch, len(train_in) // args.bptt, lr,
+                elapsed * 1000 / args.log_interval, cur_loss, correct))
+            total_loss = 0
+            start_time = time.time()
 
 # Loop over epochs.
 #lr = args.lr
@@ -264,7 +258,7 @@ try:
         train()
         #import pdb; pdb.set_trace()
         # val_loss = evaluate(val_data)
-        val_loss, correct = evaluate(val_in, val_tar.long())
+        val_loss, correct = evaluate(val_in, val_gaps, val_tar.long())
         print('-' * 89)
         print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
                 'correct {:8.2f}'.format(epoch, (time.time() - epoch_start_time),
@@ -287,7 +281,7 @@ with open(args.save, 'rb') as f:
     model = torch.load(f)
 
 # Run on test data.
-test_loss, correct = evaluate(test_in, test_tar.long())
+test_loss, correct = evaluate(test_in, test_gaps, test_tar.long())
 print('=' * 89)
 print('| End of training | test loss {:5.2f} | test ppl {:8.2f}'.format(
     test_loss, math.exp(test_loss)))

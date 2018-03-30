@@ -1,11 +1,12 @@
 import os
 import torch
 import numpy as np
+import pickle
 
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
 
-all_targets = ['gain', 'neutral', 'loss']
+all_targets = ['gain', 'neutral', 'loss', 'NA']
 n_targets = len(all_targets)
 
 # Finds base index from all_bases
@@ -52,86 +53,146 @@ def target_to_one_hot(target):
 
     return tensor
 
-def load(num, input_path, target_path, seq_len):
-    x = np.zeros((num, seq_len, 5))
-    y = np.zeros((num, 1))
-    # x = torch.zeros((num, seq_len, 5))
-    # y = torch.zeros((num, 1))
-    cur_seq_len = 0
-    cur_num = 0
 
-    with open(input_path, "rb") as infile:
-        with open(target_path, "rb") as tarfile:
-            cur_seq_len = 0
-            cur_num = 0
-            tar_num = 0
-            for tarline in tarfile:
-                tar_num+=1
-                tarline = tarline.rstrip().split("\t")
-                if(len(tarline) != 4):
-                    continue
-                for inline in infile:
-                    inline = inline.rstrip().split("\t")
-                    if(len(inline) != 4):
-                        continue
-                    
-                    #cnv_in_seq = 'No'
-                    tar_chrom = tarline[0] if 'chr' in tarline[0] else 'chr' + tarline[0]
-                    tar_start = int(tarline[1])
-                    tar_end = int(tarline[2])
-                    tar_cnv = tarline[3]
+def calculate_mini_window_feature(mini_window):
+    #import pdb; pdb.set_trace()
+    mini_window = np.array(mini_window)
+    depth = np.mean(mini_window[:, -1].astype(float))
+    gc_num = len(np.where((mini_window[:, -2] == 'C') | (mini_window[:, -2] == 'G'))[0])
+    gc_ratio = gc_num * 1.0 / len(mini_window)
+    return [depth, gc_ratio]
 
-                    in_chrom = inline[0]
-                    in_pos = int(inline[1])
-                    in_base = inline[2].upper()
-                    in_read_depth = inline[3]
-                     
-                    # Check if chromosomes are equal
-                    if(tar_chrom == in_chrom):
-                        if(tar_start <= in_pos and in_pos <= tar_end):
-                            # Check if in_base is a valid base (A, T, C or G)
-                            if(in_base in all_bases): 
-                                seq_tensor = seq_to_tensor(in_base)
-                            else:
-                                continue
-                            rd_tensor = np.array([[[int(in_read_depth)]]])
-                            x[cur_num][cur_seq_len] = np.concatenate((seq_tensor, rd_tensor),2)
-                            # Sets cnv_in_seq to 'Yes' if there is a CNV between start and end
-                            # if(tar_cnv == ''):
-                            #     cnv_in_seq = 'Yes'
-                            # else:
-                            #     cnv_in_seq='No'
-                            
-                            cur_seq_len+=1
+def calculate_target_features(start, targets):
+    for i in range(len(targets)):
+        if(start >= int(targets[i][1]) and start < int(targets[i][2])):
+            target = target_to_index(targets[i][3])
+        else:
+            target = 3
+    return target
 
-                            # When cur_seq_len is equal to seq_len set y and increment cur_num
-                            if(cur_seq_len == seq_len):
-                                #import pdb; pdb.set_trace()
-                                y[cur_num] = target_to_one_hot(tar_cnv)
-                                cur_seq_len = 0
-                                cur_num+=1
-                                cnv_in_seq = False
-                                # if current number of training examples is equal to total number of training examples
-                                # then return
-                                if(cur_num == num):
-                                    print("Found %d training examples." %(num))
-                                    return x, y
 
-                        # pos in input file has passed the end pos in the target file                      
-                        elif(in_pos > tar_end):
-                            break
-                        
-                        # pos in input file has not reached the start pos in the target file
-                        elif(in_pos < tar_start):
-                            continue
+def calculate_mini_window(window, mini_window_size):
+    features = []
+    for i in range(len(window) / mini_window_size):
+        start, end = i * mini_window_size, (i + 1) * mini_window_size
+        feature = calculate_mini_window_feature(window[start: end])
+        features.append(feature)
+    return [int(window[0][1]), np.array(features)]
 
-                    # go to next inline if chromosomes are not equal
-                    else:
-                        continue
-    print("Did not load enough training examples")
-    return x, y
+def load(num, input_path, target_path, window_size, mini_window_size):
+    input_ = np.loadtxt(input_path, dtype=str)
+    targets = np.loadtxt(target_path, dtype=str)
+    windows = []
+    tmp_window, count = [], 0
     
-def load_data(input_path, target_path, num, seq_len, use_batch=False):
+    for i in range(num):
+    #for i in range(len(input_)):
+        if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
+            tmp_window.append(input_[i])
+            count += 1 
+            if count == window_size:
+                windows.append(tmp_window)
+                tmp_window, count = [], 0
+    
+    windows_features = []
+    windows_targets = []
+    for i in range(len(windows)):
+        features = calculate_mini_window(windows[i], mini_window_size)
+        windows_features.append(features)
+        target = calculate_target_features(features[0], targets)
+        windows_targets.append(target)
+    
+    gaps = np.zeros(len(windows_features))
+    for i in range(1, len(windows_features)):
+        gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
+
+    for i in range(len(windows_features)):
+        windows_features[i][0] = gaps[i]
+
+    return windows_features, windows_targets
+
+    # x = np.zeros((num, seq_len, 5))
+    # y = np.zeros((num, 1))
+    # dist = np.zeros((num, 1))
+    # dist[0] = 0
+    # # x = torch.zeros((num, seq_len, 5))
+    # # y = torch.zeros((num, 1))
+    # cur_seq_len = 0
+    # cur_num = 0
+    # prev_in_pos = -1
+
+    # with open(input_path, "rb") as infile:
+    #     with open(target_path, "rb") as tarfile:
+    #         cur_seq_len = 0
+    #         cur_num = 0
+    #         tar_num = 0
+    #         for tarline in tarfile:
+    #             tar_num+=1
+    #             tarline = tarline.rstrip().split("\t")
+    #             if(len(tarline) != 4):
+    #                 continue
+    #             for inline in infile:
+    #                 inline = inline.rstrip().split("\t")
+    #                 if(len(inline) != 4):
+    #                     continue
+
+    #                 #cnv_in_seq = 'No'
+    #                 tar_chrom = tarline[0] if 'chr' in tarline[0] else 'chr' + tarline[0]
+    #                 tar_start = int(tarline[1])
+    #                 tar_end = int(tarline[2])
+    #                 tar_cnv = tarline[3]
+
+    #                 in_chrom = inline[0]
+    #                 in_pos = int(inline[1])
+    #                 if(cur_num > 0):
+    #                     dist[cur_num] = in_pos - prev_in_pos
+    #                 in_base = inline[2].upper()
+    #                 in_read_depth = inline[3]
+                     
+    #                 # Check if chromosomes are equal
+    #                 if(tar_chrom == in_chrom):
+    #                     # if(tar_start <= in_pos and in_pos <= tar_end):
+    #                     if(in_pos > tar_end):
+    #                         break
+    #                     # Check if in_base is a valid base (A, T, C or G)
+    #                     if(in_base in all_bases): 
+    #                         seq_tensor = seq_to_tensor(in_base)
+    #                     else:
+    #                         continue
+    #                     rd_tensor = np.array([[[int(in_read_depth)]]])
+    #                     x[cur_num][cur_seq_len] = np.concatenate((seq_tensor, rd_tensor),2)
+                        
+    #                     cur_seq_len+=1
+
+    #                     # When cur_seq_len is equal to seq_len set y and increment cur_num
+    #                     if(cur_seq_len == seq_len):
+    #                         #import pdb; pdb.set_trace()
+    #                         y[cur_num] = target_to_one_hot(tar_cnv)
+    #                         cur_seq_len = 0
+    #                         cur_num+=1
+    #                         prev_in_pos = in_pos
+    #                         cnv_in_seq = False
+    #                         # if current number of training examples is equal to total number of training examples
+    #                         # then return
+    #                         if(cur_num == num):
+    #                             print("Found %d training examples." %(num))
+    #                             return x, y
+
+    #                 # pos in input file has passed the end pos in the target file                      
+    #                 # elif(in_pos > tar_end):
+    #                 #     break
+                        
+    #                 # # pos in input file has not reached the start pos in the target file
+    #                 # elif(in_pos < tar_start):
+    #                 #     continue
+
+    #                 # go to next inline if chromosomes are not equal
+    #                 else:
+    #                     continue
+    # print("Did not load enough training examples")
+    # return x, y, dist
+    
+def load_data(input_path, target_path, num, window_size, mini_window_size):
     '''
     Args:
         input_path: file path to input file containing read depth, base
@@ -146,7 +207,7 @@ def load_data(input_path, target_path, num, seq_len, use_batch=False):
     '''
    
     print("Loading all the data...")
-    x, y = load(num, input_path, target_path, seq_len)
+    x, y = load(num, input_path, target_path, window_size, mini_window_size)
          
     return x, y
 
@@ -160,8 +221,11 @@ def save_data(input_data, target_data, in_out_path, tar_out_path):
     Returns:
 
     '''
-    input_out_file = np.save(in_out_path, input_data)
-    target_out_file = np.save(tar_out_path, target_data)
+    with open(in_out_path, 'wb') as in_out:
+        pickle.dump(input_data, in_out)
+
+    with open(tar_out_path, 'wb') as tar_out:
+        pickle.dump(target_data, tar_out)
 
 def load_data_from_file(in_path, tar_path):
     '''
@@ -176,6 +240,12 @@ def load_data_from_file(in_path, tar_path):
     print("Loading data from file...")
     x = np.load(in_path)
     y = np.load(tar_path)
+
+    with open(in_path, 'r') as infile:
+        x = pickle.load(infile)
+    
+    with open(tar_path, 'r') as tarfile:
+        y = pickle.load(tarfile)
 
     return x, y
 
@@ -198,27 +268,30 @@ def rearrange(input_data):
 
 class Corpus(object):
     # def __init__(self, path):
-    def __init__(self, train_in_path, train_tar_path, val_in_path, val_tar_path, test_in_path, test_tar_path, num, seq_len):
+    def __init__(self, num, window_size, mini_window_size):
         # self.dictionary = Dictionary()
         # self.train = self.tokenize(os.path.join(path, 'train.txt'))
         # self.valid = self.tokenize(os.path.join(path, 'valid.txt'))
         # self.test = self.tokenize(os.path.join(path, 'test.txt'))
         self.length = n_targets
-        train_in_txt = "data/input_train.out"
+        # train_in_txt = "data/input_train.out"
+        train_in_txt = "data/small_input_train.out"
         train_tar_txt = "data/target_train.out"
 
-        val_in_txt = "data/input_val.out"
+        val_in_txt = "data/small_input_val.out"
         val_tar_txt = "data/target_val.out"
 
-        test_in_txt = "data/input_test.out"
+        test_in_txt = "data/small_input_test.out"
         test_tar_txt = "data/target_test.out"
 
-        train_in_path = "data/train_in.npy"
-        train_tar_path = "data/train_tar.npy"
-        val_in_path = "data/val_in.npy"
-        val_tar_path = "data/val_tar.npy"
-        test_in_path = "data/test_in.npy"
-        test_tar_path = "data/test_tar.npy"
+        train_in_path = "data/train_in.pl"
+        train_tar_path = "data/train_tar.pl"
+
+        val_in_path = "data/val_in.pl"
+        val_tar_path = "data/val_tar.pl"
+
+        test_in_path = "data/test_in.pl"
+        test_tar_path = "data/test_tar.pl"
 
         try:
             train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
@@ -226,7 +299,7 @@ class Corpus(object):
             # train_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved training data")
-            train_x, train_y = load_data(train_in_txt, train_tar_txt, num, seq_len)
+            train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
         try:
@@ -235,7 +308,7 @@ class Corpus(object):
             # val_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved validation data")
-            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, seq_len)
+            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
             save_data(val_x, val_y, val_in_path, val_tar_path)
 
         try:
@@ -244,9 +317,8 @@ class Corpus(object):
             # test_y = np.load('data/fake_tar.npy')
         except:
             print("Could not load presaved test data")
-            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, seq_len)
+            test_x, test_y = load_data(test_in_txt, test_tar_txt, window_size, mini_window_size)
             save_data(test_x,test_y, test_in_path, test_tar_path)
-
 
         print("TARGET VALUES")
         unique, counts = np.unique(train_y, return_counts=True)
@@ -259,39 +331,35 @@ class Corpus(object):
         print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
         # print(torch.from_numpy(x).shape)
-        train_in = torch.from_numpy(train_x).float()
-        train_tar = torch.from_numpy(train_y).float()
+        # train_in = torch.from_numpy(train_x).float()
+        # train_tar = torch.from_numpy(train_y).float()
+        # train_dist = torch.from_numpy(train_dist).float()
 
-        val_in = torch.from_numpy(val_x).float()
-        val_tar = torch.from_numpy(val_y).float()
+        # val_in = torch.from_numpy(val_x).float()
+        # val_tar = torch.from_numpy(val_y).float()
 
-        test_in = torch.from_numpy(test_x).float()
-        test_tar = torch.from_numpy(test_y).float()
+        # test_in = torch.from_numpy(test_x).float()
+        # test_tar = torch.from_numpy(test_y).float()
+
+        self.train_in = train_x
+        self.train_tar = train_y
+
+        self.val_in = val_x
+        self.val_tar = val_y
+
+        self.test_in = test_x
+        self.test_tar = test_y
 
         # Flatten data
-        self.train_in = train_in.view(train_in.shape[0], -1)
-        self.train_tar = train_tar.view(train_tar.shape[0], -1)
+        # self.train_in = train_in.view(train_in.shape[0], -1)
+        # self.train_tar = train_tar.view(train_tar.shape[0], -1)
 
-        # self.val_in = train_in.view(train_in.shape[0], -1)
-        # self.val_tar = train_tar.view(train_tar.shape[0], -1)
+        # # self.val_in = val_in.view(val_in.shape[0], -1)
+        # # self.val_tar = val_tar.view(val_tar.shape[0], -1)
 
-        # self.test_in = train_in.view(train_in.shape[0], -1)
-        # self.test_tar = train_tar.view(train_tar.shape[0], -1)
+        # # self.test_in = test_in.view(test_in.shape[0], -1)
+        # # self.test_tar = test_tar.view(test_tar.shape[0], -1)
 
-        self.val_in = val_in.view(val_in.shape[0], -1)
-        self.val_tar = val_tar.view(val_tar.shape[0], -1)
-
-        self.test_in = test_in.view(test_in.shape[0], -1)
-        self.test_tar = test_tar.view(test_tar.shape[0], -1)
-
-        # self.train_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
-        # self.train_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
-
-        # self.val_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
-        # self.val_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
-        
-        # self.test_in = torch.from_numpy(np.load('data/toy_in.npy')).float()
-        # self.test_tar = torch.from_numpy(np.load('data/toy_tar.npy')).float()
         
 
     
