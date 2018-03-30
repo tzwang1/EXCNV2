@@ -85,8 +85,8 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     windows = []
     tmp_window, count = [], 0
     
-    for i in range(num):
-    #for i in range(len(input_)):
+    #for i in range(num):
+    for i in range(len(input_)):
         if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
             tmp_window.append(input_[i])
             count += 1 
@@ -275,13 +275,13 @@ class Corpus(object):
         # self.test = self.tokenize(os.path.join(path, 'test.txt'))
         self.length = n_targets
         # train_in_txt = "data/input_train.out"
-        train_in_txt = "data/small_input_train.out"
+        train_in_txt = "data/input_train.out"
         train_tar_txt = "data/target_train.out"
 
-        val_in_txt = "data/small_input_val.out"
+        val_in_txt = "data/input_val.out"
         val_tar_txt = "data/target_val.out"
 
-        test_in_txt = "data/small_input_test.out"
+        test_in_txt = "data/input_test.out"
         test_tar_txt = "data/target_test.out"
 
         train_in_path = "data/train_in.pl"
