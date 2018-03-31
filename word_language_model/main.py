@@ -12,25 +12,25 @@ import data
 import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
-# parser.add_argument('--input_train', type=str, default='./data/input_train.out',
-#                     help='location of the input corpus')
-# parser.add_argument('--target_train', type=str, default='./data/target_train.out',
-#                     help='location of the target corpus')
-# parser.add_argument('--input_val', type=str, default='./data/input_val.out',
-#                     help='location of the input corpus')
-# parser.add_argument('--target_val', type=str, default='./data/target_val.out',
-#                     help='location of the target corpus')
-# parser.add_argument('--input_test', type=str, default='./data/input_test.out',
-#                     help='location of the input corpus')
-# parser.add_argument('--target_test', type=str, default='./data/target_test.out',
-#                     help='location of the target corpus')
+parser.add_argument('--train_in', type=str, default='./data/train_in.pl',
+                    help='location of the input corpus')
+parser.add_argument('--train_tar', type=str, default='./data/train_tar.pl',
+                    help='location of the target corpus')
+parser.add_argument('--val_in', type=str, default='./data/val_in.pl',
+                    help='location of the input corpus')
+parser.add_argument('--val_tar', type=str, default='./data/val_tar.pl',
+                    help='location of the target corpus')
+parser.add_argument('--test_in', type=str, default='./data/test_in.pl',
+                    help='location of the input corpus')
+parser.add_argument('--test_tar', type=str, default='./data/test_tar.pl',
+                    help='location of the target corpus')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
 parser.add_argument('--size', type=int, default=5,
                     help='size of data')
 # parser.add_argument('--emsize', type=int, default=200,
 #                     help='size of word embeddings')
-parser.add_argument('--num', type=int, default=100000000,
+parser.add_argument('--num', type=int, default=200000000,
                     help='number of training examples')
 parser.add_argument('--win_s', type=int, default=10000,
                     help='length of sequence')
@@ -81,9 +81,17 @@ if torch.cuda.is_available():
 # corpus = data.Corpus(args.data)
 # num = 100000
 # seq_len = 30
-num = args.num
+paths = {}
+paths['train_in'] = args.train_in
+paths['train_tar'] = args.train_tar
 
-corpus = data.Corpus(num, args.win_s, args.mini_win_s)
+paths['val_in'] = args.val_in
+paths['val_tar'] = args.val_tar
+
+paths['test_in'] = args.test_in
+paths['test_tar'] = args.test_tar
+
+corpus = data.Corpus(args.num, args.win_s, args.mini_win_s, paths)
 
 # Starting from sequential data, batchify arranges the dataset into columns.
 # For instance, with the alphabet as the sequence and batch size 4, we'd get

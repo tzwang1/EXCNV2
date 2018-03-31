@@ -35,14 +35,12 @@ class RNNModel(nn.Module):
     def __init__(self, rnn_type, ntoken, ninp, nhid, fcinp, nlayers, dropout=0.5, tie_weights=False):
         super(RNNModel, self).__init__()
 
-        #import pdb; pdb.set_trace()
-        #self.drop = nn.Dropout(dropout)
-        # # TODO: add convlutional layer
+        self.drop = nn.Dropout(dropout)
 
         stride = 0
         padding = 0
         conv_out_channel = 5
-        conv_kernel_size = 4
+        conv_kernel_size = 5
         conv_pooling_kernel = 2
         fc_inp_size = fcinp
 
@@ -50,8 +48,6 @@ class RNNModel(nn.Module):
         self.maxpool = nn.MaxPool1d(conv_pooling_kernel)
 
         self.fc1 = nn.Linear(15, fc_inp_size)
-
-        # self.encoder = nn.Embedding(ntoken, ninp)
 
         if rnn_type in ['LSTM', 'GRU']:
             # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
@@ -93,7 +89,7 @@ class RNNModel(nn.Module):
         input_list = []
         # x is in shape (num // batch x batch x seq_len x 2)  
         for i in range(len(x)):
-            # import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             input_ = x[i]
             input_ = input_.unsqueeze(1)
             input_ = self.conv2d(input_)
@@ -111,7 +107,7 @@ class RNNModel(nn.Module):
         input_ = torch.cat(input_list, 0)
 
         output, hidden = self.rnn(input_, hidden)
-        #output = self.drop(output)
+        output = self.drop(output)
         # output = output[-1] # Take the last output
         # print(output.shape)
         #decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))
