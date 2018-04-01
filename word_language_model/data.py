@@ -64,7 +64,7 @@ def calculate_mini_window_feature(mini_window):
     return [depth, gc_ratio]
 
 def calculate_target_features(chrom, start, targets):
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     found = False
     for i in range(len(targets)):
         try:
