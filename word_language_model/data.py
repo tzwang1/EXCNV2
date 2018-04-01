@@ -313,7 +313,7 @@ class Corpus(object):
     # def __init__(self, path):
     def __init__(self, num, window_size, mini_window_size, paths):
         self.length = n_targets
-        
+
         train_in_txt = "data/input_train.out"
         train_tar_txt = "data/target_train.out"
 
