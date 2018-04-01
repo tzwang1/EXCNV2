@@ -1,6 +1,7 @@
 import argparse
 import data
-import main
+from main import evaluate
+from main import batchify
 
 parser = argparse.ArgumentParser(description='PyTorch RNN/LSTM CNV prediction Model')
 parser.add_argument('--save', type=str,  default='model.pt',
@@ -43,21 +44,21 @@ test_in, test_gaps, test_tar = main.batchify(corpus.test_in, corpus.test_tar, ar
 with open(args.save, 'rb') as f:
     model = torch.load(f)
 # Run on test data.
-train_loss, correct = evaluate(train_in, train_gaps, train_tar.long())
+train_loss, correct = main.evaluate(train_in, train_gaps, train_tar.long())
 print('=' * 89)
 print('| End of training | train loss {:5.2f} | train correct {:8.2f}'.format(
     train_loss, correct))
 print('=' * 89)
 
 # Run on test data.
-val_loss, correct = evaluate(val_in, val_gaps, val_tar.long())
+val_loss, correct = main.evaluate(val_in, val_gaps, val_tar.long())
 print('=' * 89)
 print('| End of training | val loss {:5.2f} | val correct {:8.2f}'.format(
     val_loss, correct))
 print('=' * 89)
 
 # Run on test data.
-test_loss, correct = evaluate(test_in, test_gaps, test_tar.long())
+test_loss, correct = main.evaluate(test_in, test_gaps, test_tar.long())
 print('=' * 89)
 print('| End of training | test loss {:5.2f} | test correct {:8.2f}'.format(
     test_loss, correct))
