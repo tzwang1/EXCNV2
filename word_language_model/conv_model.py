@@ -32,22 +32,29 @@ from torch.autograd import Variable
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, ninp, nhid, fcinp, nlayers, dropout=0.5, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, input_height, input_width, nhid, fcinp, nlayers, cnn_params, dropout=0.5, tie_weights=False):
         super(RNNModel, self).__init__()
 
         self.drop = nn.Dropout(dropout)
 
-        stride = 0
-        padding = 0
-        conv_out_channel = 5
-        conv_kernel_size = 5
-        conv_pooling_kernel = 2
+        stride = cnn_params['stride']
+        padding = cnn_params['padding']
+        conv_out_channel = cnn_params['out_channel']
+        conv_kernel_height = cnn_params['kernel_h']
+        conv_kernel_width = cnn_params['kernel_w']
+        conv_pooling_kernel = cnn_params['pool_kernel']
+        ninp = input_height * input_width
         fc_inp_size = fcinp
 
-        self.conv2d = nn.Conv2d(1, conv_out_channel, (conv_kernel_size, 2))
-        self.maxpool = nn.MaxPool1d(conv_pooling_kernel)
+        conv_out_height= ((input_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel
+        conv_out_width = ((input_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel
 
-        self.fc1 = nn.Linear(15, fc_inp_size)
+        conv_out_size = int(conv_out_channel * conv_out_height * conv_out_width)
+
+        self.conv2d = nn.Conv2d(1, conv_out_channel, (conv_kernel_height, conv_kernel_width))
+        self.maxpool = nn.MaxPool2d(conv_pooling_kernel)
+
+        self.fc1 = nn.Linear(conv_out_size, fc_inp_size)
 
         if rnn_type in ['LSTM', 'GRU']:
             # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
@@ -93,7 +100,7 @@ class RNNModel(nn.Module):
             input_ = x[i]
             input_ = input_.unsqueeze(1)
             input_ = self.conv2d(input_)
-            input_ = input_.squeeze(-1)
+            #input_ = input_.squeeze(-1)
             input_ = self.maxpool(input_)
             input_ = input_.view(input_.shape[0], -1)
             
