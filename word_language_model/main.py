@@ -38,6 +38,18 @@ parser.add_argument('--mini_win_s', type=int, default=1000,
                     help='length of small window')
 parser.add_argument('--nhid', type=int, default=200,
                     help='number of hidden units per layer')
+parser.add_argument('--padding', type=int, default=0,
+                    help='amount of padding for CNN')
+parser.add_argument('--stride', type=int, default=1,
+                    help='amount of stride for CNN')
+parser.add_argument('--kernel_h', type=int, default=5,
+                    help='kernel height for CNN')
+parser.add_argument('--kernel_w', type=int, default=1,
+                    help='kernel width for CNN')
+parser.add_argument('--pool_kernel', type=int, default=2,
+                    help='pool kernel size for CNN')
+parser.add_argument('--out_channel', type=int, default=5,
+                    help='number of output channels for CNN')
 parser.add_argument('--nlayers', type=int, default=2,
                     help='number of layers')
 parser.add_argument('--lr', type=float, default=20,
@@ -142,8 +154,18 @@ test_in, test_gaps, test_tar = batchify(corpus.test_in, corpus.test_tar, args.ba
 
 ntokens = corpus.length
 
+convNet_params = {}
+convNet_params['padding'] = args.padding
+convNet_params['stride'] = args.stride
+convNet_params['kernel_h'] = args.kernel_h
+convNet_params['kernel_w'] = args.kernel_w
+convNet_params['out_channel'] = args.out_channel
+convNet_params['pool_kernel'] = args.pool_kernel
 # conv = model.ConvNet()
-model = model.RNNModel(args.model, ntokens, (args.win_s // args.mini_win_s) * 2, args.nhid, args.fcinp, args.nlayers, args.dropout, args.tied)
+input_height = train_in.shape[2]
+input_width = train_in.shape[3]
+
+model = model.RNNModel(args.model, ntokens, input_height, input_width, args.nhid, args.fcinp, args.nlayers, convNet_params, args.dropout, args.tied)
 if args.cuda:
     model.cuda()
 
