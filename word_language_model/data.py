@@ -3,6 +3,8 @@ import torch
 import numpy as np
 import pandas as pd
 import pickle
+from torch.utils.data import Dataset, DataLoader
+from torch.autograd import Variable
 
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
@@ -308,6 +310,19 @@ def rearrange(input_data):
             new_input_data[i][j] = input_data[j][i]
     
     return new_input_data
+class CNVdata(Dataset):
+    def __init__(self, input_data, target_data):
+        self.input_data = [data[1] for data in input_data]
+        self.input_gaps = [data[0] for data in input_data]
+        self.target_data = target_data
+    
+    def __len__(self):
+        return len(self.input_data)
+    
+    def __getitem__(self, idx):
+        sample ={'input': self.input_data[idx], 'gap': self.input_gaps[idx], 'target': self.target_data[idx]}
+        return sample
+
 
 class Corpus(object):
     # def __init__(self, path):
@@ -363,6 +378,10 @@ class Corpus(object):
         unique, counts = np.unique(test_y, return_counts=True)
         print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
+        #import pdb; pdb.set_trace()
+        self.train_dataset = CNVdata(train_x, train_y)
+        self.val_dataset = CNVdata(val_x, val_y)
+        self.test_dataset = CNVdata(test_x, test_y)
 
         self.train_in = train_x
         self.train_tar = train_y

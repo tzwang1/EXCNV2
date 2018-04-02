@@ -94,13 +94,13 @@ class RNNModel(nn.Module):
 
     def forward(self, x, hidden, gap):
         input_list = []
-        # x is in shape (num // batch x batch x seq_len x 2)  
+        # x is in shape (num // batch x batch x seq_len x 2) 
+        # BPTT IMPLEMENTATION
         for i in range(len(x)):
-            #import pdb; pdb.set_trace()
             input_ = x[i]
             input_ = input_.unsqueeze(1)
             input_ = self.conv2d(input_)
-            #input_ = input_.squeeze(-1)
+            input_ = input_.squeeze(-1)
             input_ = self.maxpool(input_)
             input_ = input_.view(input_.shape[0], -1)
             
@@ -110,11 +110,28 @@ class RNNModel(nn.Module):
             gap_ = gap[i].unsqueeze(-1)
             input_ = torch.cat((input_, gap_), 1)
             input_list.append(input_.unsqueeze(0))
-        
+    
         input_ = torch.cat(input_list, 0)
-
+       
+        # SEQLEN IMPLEMENTATION       
+        #import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
+        # input_ = x
+        # input_ = input_.unsqueeze(1)
+        # input_ = self.conv2d(input_)
+        # input_ = self.maxpool(input_)
+        
+        # input_ = input_.view(input_.shape[0], -1)
+        
+        # input_ = self.fc1(input_)
+        
+        # # Concatenate gap
+        # gap_ = gap.unsqueeze(-1)
+        # input_ = torch.cat((input_, gap_), 1)
+        
+        #import pdb; pdb.set_trace()
         output, hidden = self.rnn(input_, hidden)
-        output = self.drop(output)
+        # output = self.drop(output)
         # output = output[-1] # Take the last output
         # print(output.shape)
         #decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))

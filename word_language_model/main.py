@@ -1,4 +1,5 @@
 # coding: utf-8
+import numpy as np
 import argparse
 import time
 import math
@@ -144,6 +145,16 @@ def batchify(input_data_, target_data, bsz):
 
 eval_batch_size = 10
 
+train_dataset = corpus.train_dataset
+val_dataset = corpus.val_dataset
+test_dataset = corpus.test_dataset
+
+unique, counts = np.unique(corpus.train_tar, return_counts=True)
+weights = 1/torch.from_numpy(counts).float()
+weights = weights.double()
+sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, args.batch_size)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = args.batch_size, sampler = sampler)
+
 train_in, train_gaps, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
 val_in, val_gaps, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
 test_in, test_gaps, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
@@ -246,11 +257,31 @@ def train():
     for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
         # print("Starting training iteration {}".format(i))
         data, gap, targets = get_batch(train_in, train_gaps, train_tar, i)
+    # data_list = []
+    # gap_list = []
+    # target_list = []
+    # for sample in train_loader:
+    #     data_list.append(sample['input'].float())
+    #     gap_list.append(sample['gap'].float())
+    #     target_list.append(sample['target'].float())
+    #     import pdb; pdb.set_trace()
+    #     if(len(data_list) != args.bptt):
+    #         continue
+    #     else:
+    #         data = Variable(torch.cat(data_list))
+    #         gap = Variable(torch.cat(gap_list))
+    #         targets = Variable(torch.cat(target_list))
+    #         data_list, gap_list, target_list = []
+        
+    # for sample in train_loader:
+    #     data = Variable(sample['input'].float())
+    #     gap = Variable(sample['gap'].float())
+    #     targets = Variable(sample['target'])
+        #import pdb; pdb.set_trace()
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
         hidden = repackage_hidden(hidden)
         model.zero_grad()
-
         output, hidden = model(data, hidden, gap)
         loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
