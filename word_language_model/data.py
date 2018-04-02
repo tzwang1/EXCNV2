@@ -339,45 +339,45 @@ class Corpus(object):
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
-        # try:
-        #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
-        # except:
-        #     print("Could not load presaved validation data")
-        #     val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
-        #     save_data(val_x, val_y, val_in_path, val_tar_path)
+        try:
+            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+        except:
+            print("Could not load presaved validation data")
+            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
+            save_data(val_x, val_y, val_in_path, val_tar_path)
 
-        # try:
-        #     test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
-        # except:
-        #     print("Could not load presaved test data")
-        #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
-        #     save_data(test_x,test_y, test_in_path, test_tar_path)
+        try:
+            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+        except:
+            print("Could not load presaved test data")
+            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
+            save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
         unique, counts = np.unique(train_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
 
-        # unique, counts = np.unique(val_y, return_counts=True)
-        # print("VAL TAR: {}".format(dict(zip(unique, counts))))
+        unique, counts = np.unique(val_y, return_counts=True)
+        print("VAL TAR: {}".format(dict(zip(unique, counts))))
 
-        # unique, counts = np.unique(test_y, return_counts=True)
-        # print("TEST TAR: {}".format(dict(zip(unique, counts))))
+        unique, counts = np.unique(test_y, return_counts=True)
+        print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
 
         self.train_in = train_x
         self.train_tar = train_y
 
-        self.val_in = train_x
-        self.val_tar = train_y
+        # self.val_in = train_x
+        # self.val_tar = train_y
 
-        self.test_in = train_x
-        self.test_tar = train_y
+        # self.test_in = train_x
+        # self.test_tar = train_y
     
-        # self.val_in = val_x
-        # self.val_tar = val_y
+        self.val_in = val_x
+        self.val_tar = val_y
 
-        # self.test_in = test_x
-        # self.test_tar = test_y
+        self.test_in = test_x
+        self.test_tar = test_y
 
 
         
