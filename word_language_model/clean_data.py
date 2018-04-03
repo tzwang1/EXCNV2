@@ -1,7 +1,7 @@
 import pandas as pd
 
-input_path = 
-output_path = 
+input_path = "data/good_data/input_val.out" 
+output_path = "data/good_data/input_val2.out"
 
 x = pd.read_csv(input_path, sep='\t')
 x[x.columns[0]] = x[x.columns[0]].map(lambda x: x.lstrip('chr'))
