@@ -35,9 +35,9 @@ parser.add_argument('--num', type=int, default=200000000,
                     help='number of training examples')
 parser.add_argument('--win_s', type=int, default=10000,
                     help='length of sequence')
-parser.add_argument('--mini_win_s', type=int, default=1000,
+parser.add_argument('--mini_win_s', type=int, default=100,
                     help='length of small window')
-parser.add_argument('--nhid', type=int, default=200,
+parser.add_argument('--nhid', type=int, default=50,
                     help='number of hidden units per layer')
 parser.add_argument('--padding', type=int, default=0,
                     help='amount of padding for CNN')
@@ -55,8 +55,10 @@ parser.add_argument('--nlayers', type=int, default=2,
                     help='number of layers')
 parser.add_argument('--lr', type=float, default=20,
                     help='initial learning rate')
-parser.add_argument('--fcinp', type=int, default=100,
-                    help='fully connected layer input size')
+parser.add_argument('--fcout1', type=int, default=100,
+                    help='fully connected layer 1 output size')
+parser.add_argument('--fcout2', type=int, default=100,
+                    help='fully connected layer 2 output size')
 parser.add_argument('--clip', type=float, default=0.25,
                     help='gradient clipping')
 parser.add_argument('--epochs', type=int, default=40,
@@ -145,15 +147,15 @@ def batchify(input_data_, target_data, bsz):
 
 eval_batch_size = 10
 
-train_dataset = corpus.train_dataset
-val_dataset = corpus.val_dataset
-test_dataset = corpus.test_dataset
+# train_dataset = corpus.train_dataset
+# val_dataset = corpus.val_dataset
+# test_dataset = corpus.test_dataset
 
-unique, counts = np.unique(corpus.train_tar, return_counts=True)
-weights = 1/torch.from_numpy(counts).float()
-weights = weights.double()
-sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, args.batch_size)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = args.batch_size, sampler = sampler)
+# unique, counts = np.unique(corpus.train_tar, return_counts=True)
+# weights = 1/torch.from_numpy(counts).float()
+# weights = weights.double()
+# sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, args.batch_size)
+# train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = args.batch_size, sampler = sampler)
 
 train_in, train_gaps, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
 val_in, val_gaps, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
@@ -176,7 +178,7 @@ convNet_params['pool_kernel'] = args.pool_kernel
 input_height = train_in.shape[2]
 input_width = train_in.shape[3]
 
-model = model.RNNModel(args.model, ntokens, input_height, input_width, args.nhid, args.fcinp, args.nlayers, convNet_params, args.dropout, args.tied)
+model = model.RNNModel(args.model, ntokens, input_height, input_width, args.nhid, args.fcout1, args.fcout2, args.nlayers, convNet_params, args.dropout, args.tied)
 if args.cuda:
     model.cuda()
 
@@ -312,6 +314,7 @@ best_val_loss = None
 
 # At any point you can hit Ctrl + C to break out of training early.
 try:
+    print(model)
     for epoch in range(1, args.epochs+1):
         epoch_start_time = time.time()
         # print("Starting training for epoch {}".format(epoch))

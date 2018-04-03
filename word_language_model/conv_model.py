@@ -32,11 +32,11 @@ from torch.autograd import Variable
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, input_height, input_width, nhid, fcinp, nlayers, cnn_params, dropout=0.5, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, input_height, input_width, nhid, fcout1, fcout2,  nlayers, cnn_params, dropout=0.5, tie_weights=False):
         super(RNNModel, self).__init__()
 
         self.drop = nn.Dropout(dropout)
-
+        #import pdb; pdb.set_trace()
         stride = cnn_params['stride']
         padding = cnn_params['padding']
         conv_out_channel = cnn_params['out_channel']
@@ -44,21 +44,30 @@ class RNNModel(nn.Module):
         conv_kernel_width = cnn_params['kernel_w']
         conv_pooling_kernel = cnn_params['pool_kernel']
         ninp = input_height * input_width
-        fc_inp_size = fcinp
+        fc1_out_size = fcout1
+        # fc2_out_size = fcout2
 
-        conv_out_height= ((input_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel
-        conv_out_width = ((input_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel
+        conv1_out_height= int(((input_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel)
+        conv1_out_width = int(((input_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel)
 
-        conv_out_size = int(conv_out_channel * conv_out_height * conv_out_width)
+        # conv2_out_height = int(((conv1_out_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel)
+        # conv2_out_width = int(((conv1_out_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel)
+
+        conv1_out_size = int(conv_out_channel * conv1_out_height * conv1_out_width)
+        # conv2_out_size = int(conv_out_channel*2 * conv2_out_height * conv2_out_width)
 
         self.conv2d = nn.Conv2d(1, conv_out_channel, (conv_kernel_height, conv_kernel_width))
         self.maxpool = nn.MaxPool2d(conv_pooling_kernel)
+        # self.conv2d = nn.Conv2d(conv_out_channel, conv_out_channel*2, (conv_kernel_height, conv_kernel_width))
+        # self.maxpool = nn.MaxPool2d(conv_pooling_kernel)
 
-        self.fc1 = nn.Linear(conv_out_size, fc_inp_size)
+        self.fc1 = nn.Linear(conv1_out_size, fc1_out_size)
+        # self.fc1 = nn.Linear(conv2_out_size, fc1_out_size)
+        # self.fc2 = nn.Linear(fc1_out_size, fc2_out_size)
 
         if rnn_type in ['LSTM', 'GRU']:
             # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
-            self.rnn = getattr(nn, rnn_type)(fc_inp_size+1, nhid, nlayers, dropout=dropout)
+            self.rnn = getattr(nn, rnn_type)(fc1_out_size+1, nhid, nlayers, dropout=dropout)
         else:
             try:
                 nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
@@ -68,6 +77,8 @@ class RNNModel(nn.Module):
             # self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
             self.rnn = nn.RNN(fc_inp_size+1, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
         self.decoder = nn.Linear(nhid, ntoken)
+        # self.decoder1 = nn.Linear(nhid, decode1_out)
+        # self.decoder2 = nn.Linear(decode1_out, ntoken)
 
         # Optionally tie weights as in:
         # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
