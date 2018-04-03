@@ -8,6 +8,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 import data
 import conv_model as model
@@ -309,7 +312,9 @@ def train():
 # Loop over epochs.
 lr = args.lr
 best_val_loss = None
-
+val_loss_lst = []
+val_correct = []
+train_loss_lst = []
 # At any point you can hit Ctrl + C to break out of training early.
 try:
     for epoch in range(1, args.epochs+1):
@@ -319,6 +324,8 @@ try:
         #import pdb; pdb.set_trace()
         # val_loss = evaluate(val_data)
         val_loss, correct = evaluate(test_in, test_gaps, test_tar.long())
+        val_loss_lst.append(val_loss)
+        val_correct.append(correct)
         print('-' * 89)
         print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.5f} | '
                 'val correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
@@ -333,7 +340,10 @@ try:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
             # lr /= 1.2
             lr = lr
-
+    fig, ax = plt.subplots( nrows=1, ncols=1)
+    ax.plot(val_correct)
+    fig.savefig('val_correct.png')
+    plt.close(fig)
 except KeyboardInterrupt:
     print('-' * 89)
     print('Exiting from training early')
