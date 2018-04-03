@@ -326,17 +326,17 @@ class CNVdata(Dataset):
 
 class Corpus(object):
     # def __init__(self, path):
-    def __init__(self, num, window_size, mini_window_size, paths):
+    def __init__(self, num, window_size, mini_window_size, paths, data_folder):
         self.length = n_targets
 
-        train_in_txt = "data/input_train.out"
-        train_tar_txt = "data/target_train.out"
+        train_in_txt = data_folder + "/input_train.out"
+        train_tar_txt = data_folder + "/target_train.out"
 
-        val_in_txt = "data/input_val.out"
-        val_tar_txt = "data/target_val.out"
+        val_in_txt = data_folder + "/input_val.out"
+        val_tar_txt = data_folder + "/target_val.out"
 
-        test_in_txt = "data/input_test.out"
-        test_tar_txt = "data/target_test.out"
+        test_in_txt = data_folder + "/input_test.out"
+        test_tar_txt = data_folder + "/target_test.out"
 
         train_in_path = paths['train_in']
         train_tar_path = paths['train_tar']
@@ -354,49 +354,49 @@ class Corpus(object):
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
-        try:
-            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
-        except:
-            print("Could not load presaved validation data")
-            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
-            save_data(val_x, val_y, val_in_path, val_tar_path)
+        # try:
+        #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+        # except:
+        #     print("Could not load presaved validation data")
+        #     val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
+        #     save_data(val_x, val_y, val_in_path, val_tar_path)
 
-        try:
-            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
-        except:
-            print("Could not load presaved test data")
-            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
-            save_data(test_x,test_y, test_in_path, test_tar_path)
+        # try:
+        #     test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+        # except:
+        #     print("Could not load presaved test data")
+        #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
+        #     save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
         unique, counts = np.unique(train_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
 
-        unique, counts = np.unique(val_y, return_counts=True)
-        print("VAL TAR: {}".format(dict(zip(unique, counts))))
+        # unique, counts = np.unique(val_y, return_counts=True)
+        # print("VAL TAR: {}".format(dict(zip(unique, counts))))
 
-        unique, counts = np.unique(test_y, return_counts=True)
-        print("TEST TAR: {}".format(dict(zip(unique, counts))))
+        # unique, counts = np.unique(test_y, return_counts=True)
+        # print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
         #import pdb; pdb.set_trace()
-        self.train_dataset = CNVdata(train_x, train_y)
-        self.val_dataset = CNVdata(val_x, val_y)
-        self.test_dataset = CNVdata(test_x, test_y)
+        # self.train_dataset = CNVdata(train_x, train_y)
+        # self.val_dataset = CNVdata(val_x, val_y)
+        # self.test_dataset = CNVdata(test_x, test_y)
 
         self.train_in = train_x
         self.train_tar = train_y
 
-        # self.val_in = train_x
-        # self.val_tar = train_y
+        self.val_in = train_x
+        self.val_tar = train_y
 
-        # self.test_in = train_x
-        # self.test_tar = train_y
+        self.test_in = train_x
+        self.test_tar = train_y
     
-        self.val_in = val_x
-        self.val_tar = val_y
+        # self.val_in = val_x
+        # self.val_tar = val_y
 
-        self.test_in = test_x
-        self.test_tar = test_y
+        # self.test_in = test_x
+        # self.test_tar = test_y
 
 
         

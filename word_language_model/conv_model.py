@@ -32,7 +32,7 @@ from torch.autograd import Variable
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, input_height, input_width, nhid, fcout1, fcout2,  nlayers, cnn_params, dropout=0.5, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, input_height, input_width, hyperparameters, nlayers, cnn_params, dropout=0.5, tie_weights=False):
         super(RNNModel, self).__init__()
 
         self.drop = nn.Dropout(dropout)
@@ -43,27 +43,33 @@ class RNNModel(nn.Module):
         conv_kernel_height = cnn_params['kernel_h']
         conv_kernel_width = cnn_params['kernel_w']
         conv_pooling_kernel = cnn_params['pool_kernel']
+        
         ninp = input_height * input_width
-        fc1_out_size = fcout1
-        # fc2_out_size = fcout2
+        
+        nhid = hyperparameters['nhid']
+        fc1_out_size = hyperparameters['fcout1']
+        fc2_out_size = hyperparameters['fcout2']
+        decode1_out = hyperparameters['decode1']
 
         conv1_out_height= int(((input_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel)
         conv1_out_width = int(((input_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel)
 
-        # conv2_out_height = int(((conv1_out_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel)
+        conv2_out_height = int(((conv1_out_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel)
         # conv2_out_width = int(((conv1_out_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel)
+        conv2_out_width = conv1_out_width
 
         conv1_out_size = int(conv_out_channel * conv1_out_height * conv1_out_width)
-        # conv2_out_size = int(conv_out_channel*2 * conv2_out_height * conv2_out_width)
+        conv2_out_size = int(conv_out_channel*2 * conv2_out_height * conv2_out_width)
 
-        self.conv2d = nn.Conv2d(1, conv_out_channel, (conv_kernel_height, conv_kernel_width))
-        self.maxpool = nn.MaxPool2d(conv_pooling_kernel)
-        # self.conv2d = nn.Conv2d(conv_out_channel, conv_out_channel*2, (conv_kernel_height, conv_kernel_width))
-        # self.maxpool = nn.MaxPool2d(conv_pooling_kernel)
+        self.conv2d1 = nn.Conv2d(1, conv_out_channel, (conv_kernel_height, conv_kernel_width))
+        self.maxpool1 = nn.MaxPool2d(conv_pooling_kernel)
+        self.conv2d2 = nn.Conv2d(conv_out_channel, conv_out_channel*2, (conv_kernel_height, 1))
+        self.maxpool2 = nn.MaxPool1d(conv_pooling_kernel)
 
-        self.fc1 = nn.Linear(conv1_out_size, fc1_out_size)
-        # self.fc1 = nn.Linear(conv2_out_size, fc1_out_size)
-        # self.fc2 = nn.Linear(fc1_out_size, fc2_out_size)
+        #import pdb; pdb.set_trace()
+        # self.fc1 = nn.Linear(conv1_out_size, fc1_out_size)
+        self.fc1 = nn.Linear(conv2_out_size, fc1_out_size)
+        self.fc2 = nn.Linear(fc1_out_size, fc2_out_size)
 
         if rnn_type in ['LSTM', 'GRU']:
             # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
@@ -76,9 +82,9 @@ class RNNModel(nn.Module):
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
             # self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
             self.rnn = nn.RNN(fc_inp_size+1, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
-        self.decoder = nn.Linear(nhid, ntoken)
-        # self.decoder1 = nn.Linear(nhid, decode1_out)
-        # self.decoder2 = nn.Linear(decode1_out, ntoken)
+        # self.decoder = nn.Linear(nhid, ntoken)
+        self.decoder1 = nn.Linear(nhid, decode1_out)
+        self.decoder2 = nn.Linear(decode1_out, ntoken)
 
         # Optionally tie weights as in:
         # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
@@ -100,22 +106,31 @@ class RNNModel(nn.Module):
     def init_weights(self):
         initrange = 0.1
         # self.encoder.weight.data.uniform_(-initrange, initrange)
-        self.decoder.bias.data.fill_(0)
-        self.decoder.weight.data.uniform_(-initrange, initrange)
+        self.decoder1.bias.data.fill_(0)
+        self.decoder1.weight.data.uniform_(-initrange, initrange)
+        self.decoder2.bias.data.fill_(0)
+        self.decoder2.weight.data.uniform_(-initrange, initrange)
 
     def forward(self, x, hidden, gap):
         input_list = []
         # x is in shape (num // batch x batch x seq_len x 2) 
         # BPTT IMPLEMENTATION
+        #import pdb; pdb.set_trace()
         for i in range(len(x)):
             input_ = x[i]
             input_ = input_.unsqueeze(1)
-            input_ = self.conv2d(input_)
+            input_ = self.conv2d1(input_)
             input_ = input_.squeeze(-1)
-            input_ = self.maxpool(input_)
+            input_ = self.maxpool1(input_)
+            # import pdb; pdb.set_trace()
+            # input_ = input_.squeeze(-1)
+            input_ = self.conv2d2(input_)
+            input_ = input_.squeeze(-1)
+            input_ = self.maxpool2(input_)
             input_ = input_.view(input_.shape[0], -1)
             
             input_ = self.fc1(input_)
+            input_ = self.fc2(input_)
             
             # Concatenate gap
             gap_ = gap[i].unsqueeze(-1)
@@ -123,22 +138,6 @@ class RNNModel(nn.Module):
             input_list.append(input_.unsqueeze(0))
     
         input_ = torch.cat(input_list, 0)
-       
-        # SEQLEN IMPLEMENTATION       
-        #import pdb; pdb.set_trace()
-        # import pdb; pdb.set_trace()
-        # input_ = x
-        # input_ = input_.unsqueeze(1)
-        # input_ = self.conv2d(input_)
-        # input_ = self.maxpool(input_)
-        
-        # input_ = input_.view(input_.shape[0], -1)
-        
-        # input_ = self.fc1(input_)
-        
-        # # Concatenate gap
-        # gap_ = gap.unsqueeze(-1)
-        # input_ = torch.cat((input_, gap_), 1)
         
         #import pdb; pdb.set_trace()
         output, hidden = self.rnn(input_, hidden)
@@ -146,7 +145,8 @@ class RNNModel(nn.Module):
         # output = output[-1] # Take the last output
         # print(output.shape)
         #decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))
-        decoded = self.decoder(output)
+        decoded = self.decoder1(output)
+        decoded = self.decoder2(decoded)
         # print(decoded.shape)
         #decoded = self.sigmoid(decoded)
         return decoded, hidden

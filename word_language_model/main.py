@@ -16,18 +16,20 @@ import data
 import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
-parser.add_argument('--train_in', type=str, default='./data/train_in.pl',
-                    help='location of the input corpus')
-parser.add_argument('--train_tar', type=str, default='./data/train_tar.pl',
-                    help='location of the target corpus')
-parser.add_argument('--val_in', type=str, default='./data/val_in.pl',
-                    help='location of the input corpus')
-parser.add_argument('--val_tar', type=str, default='./data/val_tar.pl',
-                    help='location of the target corpus')
-parser.add_argument('--test_in', type=str, default='./data/test_in.pl',
-                    help='location of the input corpus')
-parser.add_argument('--test_tar', type=str, default='./data/test_tar.pl',
-                    help='location of the target corpus')
+parser.add_argument('--data_folder', type=str, default='data',
+                    help='location of the data')
+parser.add_argument('--train_in', type=str, default='train_in.pl',
+                    help='location of the input training data')
+parser.add_argument('--train_tar', type=str, default='train_tar.pl',
+                    help='location of the target training data')
+parser.add_argument('--val_in', type=str, default='val_in.pl',
+                    help='location of the input validation data')
+parser.add_argument('--val_tar', type=str, default='val_tar.pl',
+                    help='location of the target validation data')
+parser.add_argument('--test_in', type=str, default='test_in.pl',
+                    help='location of the input testing data')
+parser.add_argument('--test_tar', type=str, default='test_tar.pl',
+                    help='location of the target testing data')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
 parser.add_argument('--size', type=int, default=5,
@@ -62,6 +64,8 @@ parser.add_argument('--fcout1', type=int, default=100,
                     help='fully connected layer 1 output size')
 parser.add_argument('--fcout2', type=int, default=100,
                     help='fully connected layer 2 output size')
+parser.add_argument('--decode1', type=int, default=100,
+                    help='decoder output size')
 parser.add_argument('--clip', type=float, default=0.25,
                     help='gradient clipping')
 parser.add_argument('--epochs', type=int, default=40,
@@ -100,16 +104,16 @@ if torch.cuda.is_available():
 # num = 100000
 # seq_len = 30
 paths = {}
-paths['train_in'] = args.train_in
-paths['train_tar'] = args.train_tar
+paths['train_in'] = args.data_folder + "/" + args.train_in
+paths['train_tar'] = args.data_folder + "/" + args.train_tar
 
-paths['val_in'] = args.val_in
-paths['val_tar'] = args.val_tar
+paths['val_in'] = args.data_folder + "/" + args.val_in
+paths['val_tar'] = args.data_folder + "/" + args.val_tar
 
-paths['test_in'] = args.test_in
-paths['test_tar'] = args.test_tar
+paths['test_in'] = args.data_folder + "/" + args.test_in
+paths['test_tar'] = args.data_folder + "/" + args.test_tar
 
-corpus = data.Corpus(args.num, args.win_s, args.mini_win_s, paths)
+corpus = data.Corpus(args.num, args.win_s, args.mini_win_s, paths, args.data_folder)
 
 # Starting from sequential data, batchify arranges the dataset into columns.
 # For instance, with the alphabet as the sequence and batch size 4, we'd get
@@ -181,7 +185,13 @@ convNet_params['pool_kernel'] = args.pool_kernel
 input_height = train_in.shape[2]
 input_width = train_in.shape[3]
 
-model = model.RNNModel(args.model, ntokens, input_height, input_width, args.nhid, args.fcout1, args.fcout2, args.nlayers, convNet_params, args.dropout, args.tied)
+hyperparameters = {}
+hyperparameters['nhid'] = args.nhid
+hyperparameters['fcout1'] = args.fcout1
+hyperparameters['fcout2'] = args.fcout2
+hyperparameters['decode1'] = args.decode1
+
+model = model.RNNModel(args.model, ntokens, input_height, input_width, hyperparameters, args.nlayers, convNet_params, args.dropout, args.tied)
 if args.cuda:
     model.cuda()
 
