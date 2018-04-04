@@ -129,10 +129,10 @@ corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.dat
 
 def batchify(input_data_, target_data, bsz):
     print("Batchifying data....")
-    input_gaps = [data[0] for data in input_data_]
-    input_data = [data[1] for data in input_data_]
+    # input_gaps = [data[0] for data in input_data_]
+    # input_data = [data[1] for data in input_data_]
 
-    input_gaps = torch.FloatTensor(input_gaps)
+    # input_gaps = torch.FloatTensor(input_gaps)
     input_data = torch.FloatTensor(input_data)
     target_data = torch.FloatTensor(target_data)
 
@@ -140,16 +140,17 @@ def batchify(input_data_, target_data, bsz):
     nbatch = input_data.size(0) // bsz
     # Trim off any extra elements that wouldn't cleanly fit (remainders).
     input_data = input_data.narrow(0, 0, nbatch * bsz)
-    input_gaps = input_gaps.narrow(0, 0, nbatch * bsz)
+    # input_gaps = input_gaps.narrow(0, 0, nbatch * bsz)
     target_data = target_data.narrow(0, 0, nbatch * bsz)
     # Evenly divide the data across the bsz batches.
     input_data = input_data.view(input_data.shape[0] // bsz, bsz, input_data.shape[1], -1)
-    input_gaps = input_gaps.view(input_gaps.shape[0] // bsz, bsz)
+    # input_gaps = input_gaps.view(input_gaps.shape[0] // bsz, bsz)
     target_data = target_data.view(bsz, -1).t().contiguous()
     # if args.cuda:
     #     input_data = input_data.cuda()
     #     target_data = target_data.cuda()
-    return input_data, input_gaps, target_data
+    # return input_data, input_gaps, target_data
+    return input_data, target_data
 
 
 eval_batch_size = 10
@@ -164,9 +165,13 @@ eval_batch_size = 10
 # sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, args.batch_size)
 # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size = args.batch_size, sampler = sampler)
 
-train_in, train_gaps, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
-val_in, val_gaps, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
-test_in, test_gaps, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
+# train_in, train_gaps, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
+# val_in, val_gaps, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
+# test_in, test_gaps, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
+
+train_in, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
+val_in, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
+test_in, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
 
 ###############################################################################
 # Build the model
@@ -222,23 +227,24 @@ def repackage_hidden(h):
 # by the batchify function. The chunks are along dimension 0, corresponding
 # to the seq_len dimension in the LSTM.
 
-def get_batch(input_data, gap_data, target_data, i, evaluation=False):
+def get_batch(input_data, target_data, i, evaluation=False):
     sequence_len = min(args.bptt, len(input_data) - 1 - i)
     
     data = input_data[i:i+sequence_len]
-    gap = gap_data[i:i+sequence_len]
+    # gap = gap_data[i:i+sequence_len]
     target = target_data[i:i+sequence_len]
     # if args.cuda:
     #     data = data.cuda()
     #     target = target.cuda()
 
     data = Variable(data, volatile=evaluation)
-    gap = Variable(gap, volatile=evaluation)
+    # gap = Variable(gap, volatile=evaluation)
     target = Variable(target)
 
-    return data, gap, target
+    # return data, gap, target
+    return data, target
 
-def evaluate(input_data, gap_data, target_data):
+def evaluate(input_data, target_data):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0.0
@@ -249,9 +255,11 @@ def evaluate(input_data, gap_data, target_data):
     # hidden = model.init_hidden(eval_batch_size)
     # for i in range(0, data_source.size(0) - 1, args.bptt)
     for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
-        data, gap, targets = get_batch(input_data, gap_data, target_data, i)
+        # data, gap, targets = get_batch(input_data, gap_data, target_data, i)
+        data, targets = get_batch(input_data, target_data, i)
 
-        output, hidden = model(data, hidden, gap.float())
+        # output, hidden = model(data, hidden, gap.float())
+        output, hidden = model(data, hidden)
         
         total_loss += len(data) * criterion(output.view(-1, ntokens), targets.long().view(-1)).data
         hidden = repackage_hidden(hidden)

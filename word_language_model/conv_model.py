@@ -111,7 +111,7 @@ class RNNModel(nn.Module):
         self.decoder2.bias.data.fill_(0)
         self.decoder2.weight.data.uniform_(-initrange, initrange)
 
-    def forward(self, x, hidden, gap):
+    def forward(self, x, hidden):
         input_list = []
         # x is in shape (num // batch x batch x seq_len x 2) 
         # BPTT IMPLEMENTATION
@@ -133,8 +133,8 @@ class RNNModel(nn.Module):
             input_ = self.fc2(input_)
             
             # Concatenate gap
-            gap_ = gap[i].unsqueeze(-1)
-            input_ = torch.cat((input_, gap_), 1)
+            # gap_ = gap[i].unsqueeze(-1)
+            # input_ = torch.cat((input_, gap_), 1)
             input_list.append(input_.unsqueeze(0))
     
         input_ = torch.cat(input_list, 0)
