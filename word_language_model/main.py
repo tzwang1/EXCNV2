@@ -113,7 +113,7 @@ paths['val_tar'] = args.data_folder + "/" + args.val_tar
 paths['test_in'] = args.data_folder + "/" + args.test_in
 paths['test_tar'] = args.data_folder + "/" + args.test_tar
 
-corpus = data.Corpus(args.num, args.win_s, args.mini_win_s, paths, args.data_folder)
+corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.data_folder)
 
 # Starting from sequential data, batchify arranges the dataset into columns.
 # For instance, with the alphabet as the sequence and batch size 4, we'd get
