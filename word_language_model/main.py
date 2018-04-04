@@ -127,7 +127,7 @@ corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.dat
 # dependence of e. g. 'g' on 'f' can not be learned, but allows more efficient
 # batch processing.
 
-def batchify(input_data_, target_data, bsz):
+def batchify(input_data, target_data, bsz):
     print("Batchifying data....")
     # input_gaps = [data[0] for data in input_data_]
     # input_data = [data[1] for data in input_data_]
