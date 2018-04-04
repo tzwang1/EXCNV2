@@ -85,70 +85,86 @@ def calculate_target_features(chrom, start, targets):
 
 
 def calculate_mini_window(window, mini_window_size):
+    #import pdb; pdb.set_trace()
     features = []
     for i in range(len(window) / mini_window_size):
         start, end = i * mini_window_size, (i + 1) * mini_window_size
         feature = calculate_mini_window_feature(window[start: end])
         features.append(feature)
-    return [int(window[0][1]), np.array(features)]
+    # return [int(window[0][1]), np.array(features)]
+    return np.array(features)
 
 def load(num, input_path, target_path, window_size, mini_window_size):
     # input_ = np.loadtxt(input_path, dtype=str)
     #targets = np.loadtxt(target_path, dtype=str)
+    MAX_SIZE = 1000000
     
     if(num == -1):
         input_ = pd.read_csv(input_path, delimiter="\t")
     else:
         input_ = pd.read_csv(input_path, delimiter="\t", nrows=num)
-
+    
     targets = np.genfromtxt(target_path, dtype=None)
     input_ = np.asarray(input_)
-
-    # with open(input_path) as infile:
-    #     num_lines = sum(1 for line in infile)
-
-    # chunk_size = num_lines // num_blocks
-    # chunks = 1
     
-    # all_windows_features = []
-    # all_windows_targets = []
     
-    # input_ = pd.read_csv(input_path, delimiter="\t")
-    # input_ = np.asarray(input_)
-    # targets = pd.read_csv(target_path, delimiter="\t")
-    # targets = np.asarray(targets)
+    small_targets = []
+    for i in range(len(targets)):
+        if(targets[i][2] - targets[i][1] < MAX_SIZE):
+            small_targets.append(targets[i])
+    
+  
+    targets = np.array(small_targets)
+    tar_pos = 0
     windows = []
-    tmp_window, count = [], 0
-    # for input_ in pd.read_csv(input_path, delimiter="\t", chunksize=chunk_size):
-        # print("Processing chunk: {}".format(chunks))
-        # chunks+=1
-        # input_ = np.asarray(input_)
-    print("Getting windows features")
+    tmp_window = []
+    windows_targets = []
+    print("Getting window features")
     for i in range(len(input_)):
-        if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
+        chrom = targets[tar_pos][0]
+        end_point = targets[tar_pos][2]
+        if str(input_[i,0]) == chrom and int(input_[i,1]) <= end_point:
             tmp_window.append(input_[i])
-            count += 1 
-            if count == window_size:
-                windows.append(tmp_window)
-                tmp_window, count = [], 0
-    
+        elif str(input_[i,0]) == chrom and int(input_[i,1]) > end_point:
+            tmp_window.append(input_[i])
+            windows.append(tmp_window)
+            windows_targets.append(targets[tar_pos][3])
+            tmp_window = []
+            if(tar_pos < len(targets)-1):
+                tar_pos+=1
+            else:
+                break
+        else:
+            continue
+
+    # windows = []
+    # tmp_window, count = [], 0
+    # print("Getting windows features")
+    # for i in range(len(input_)):
+    #     if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
+    #         tmp_window.append(input_[i])
+    #         count += 1 
+    #         if count == window_size:
+    #             windows.append(tmp_window)
+    #             tmp_window, count = [], 0
     print("Calculating mini window features")
     windows_features = []
-    windows_targets = []
+    # windows_targets = []
     for i in range(len(windows)):
         chrom = windows[i][0][0]
+        #import pdb; pdb.set_trace()
         features = calculate_mini_window(windows[i], mini_window_size)
         windows_features.append(features)
-        target = calculate_target_features(chrom, features[0], targets)
-        windows_targets.append(target)
+        # target = calculate_target_features(chrom, features[0], targets)
+        # windows_targets.append(target)
     
-    print("Calculating gaps")
-    gaps = np.zeros(len(windows_features))
-    for i in range(1, len(windows_features)):
-        gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
+    # print("Calculating gaps")
+    # gaps = np.zeros(len(windows_features))
+    # for i in range(1, len(windows_features)):
+    #     gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
 
-    for i in range(len(windows_features)):
-        windows_features[i][0] = gaps[i]
+    # for i in range(len(windows_features)):
+    #     windows_features[i][0] = gaps[i]
 
     # all_windows_features += windows_features
     # all_windows_targets += windows_targets
