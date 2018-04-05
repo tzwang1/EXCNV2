@@ -20,4 +20,7 @@ clean(args.input)
 # clean(input_val, output_val)
 # clean(input_test, output_test)
 
+#clean(input_train, output_train)
+#clean(input_val, output_val)
+#clean(input_test, output_test)
 
