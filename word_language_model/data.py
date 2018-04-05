@@ -5,6 +5,7 @@ import pandas as pd
 import pickle
 from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
+from collections import defaultdict
 
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
@@ -338,6 +339,14 @@ def rearrange(input_data):
             new_input_data[i][j] = input_data[j][i]
     
     return new_input_data
+
+def create_dict(input_data, target_data):
+    d = defaultdict(list)
+    for i in range(len(input_data)):
+        d[len(input_data[i])].append(input_data[i], target_data[i])
+    
+    return d
+
 class CNVdata(Dataset):
     def __init__(self, input_data, target_data):
         self.input_data = [data[1] for data in input_data]
