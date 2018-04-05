@@ -162,6 +162,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
         windows = s[k]
         windows_features = []
         for i in range(len(windows)):
+            print("Looking at window {} out of {} total".format(i, len(windows)))
             chrom = windows[i][0][0]
             #import pdb; pdb.set_trace()
             features = calculate_mini_window(windows[i], mini_window_size)
