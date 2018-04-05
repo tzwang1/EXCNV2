@@ -138,8 +138,8 @@ def load(num, input_path, target_path, window_size, mini_window_size):
                 windows.append(tmp_window)
             
             s.append(windows)
-            windows_targets.append(targets[tar_pos][3])
-            tmp_window, count= [], 0
+            windows_targets.append(target_to_index(targets[tar_pos][3]))
+            windows, tmp_window, count = [], [], 0
             if(tar_pos < len(targets)-1):
                 tar_pos+=1
             else:
@@ -158,9 +158,11 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     s_features = []
     # windows_targets = []
     for k in range(len(s)):
+        print("Looking at window {} out of {} total".format(k, len(s)))
         windows = s[k]
         windows_features = []
         for i in range(len(windows)):
+            #print("Looking at window {} out of {} total".format(i, len(windows)))
             chrom = windows[i][0][0]
             #import pdb; pdb.set_trace()
             features = calculate_mini_window(windows[i], mini_window_size)
