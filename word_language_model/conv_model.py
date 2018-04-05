@@ -142,7 +142,7 @@ class RNNModel(nn.Module):
         #import pdb; pdb.set_trace()
         output, hidden = self.rnn(input_, hidden)
         # output = self.drop(output)
-        # output = output[-1] # Take the last output
+        output = output[-1] # Take the last output
         # print(output.shape)
         #decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))
         decoded = self.decoder1(output)

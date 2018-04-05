@@ -116,8 +116,10 @@ def load(num, input_path, target_path, window_size, mini_window_size):
   
     targets = np.array(small_targets)
     tar_pos = 0
+    s = []
     windows = []
     tmp_window = []
+    count = 0
     windows_targets = []
     print("Getting window features")
     for i in range(len(input_)):
@@ -125,17 +127,25 @@ def load(num, input_path, target_path, window_size, mini_window_size):
         end_point = targets[tar_pos][2]
         if str(input_[i,0]) == chrom and int(input_[i,1]) <= end_point:
             tmp_window.append(input_[i])
-        elif str(input_[i,0]) == chrom and int(input_[i,1]) > end_point:
+            count += 1
+            if count == window_size:
+                windows.append(tmp_window)
+                tmp_window, count = [], 0
+        else:
             tmp_window.append(input_[i])
-            windows.append(tmp_window)
+            count += 1
+            if count == window_size:
+                windows.append(tmp_window)
+            
+            s.append(windows)
             windows_targets.append(targets[tar_pos][3])
-            tmp_window = []
+            tmp_window, count= [], 0
             if(tar_pos < len(targets)-1):
                 tar_pos+=1
             else:
                 break
-        else:
-            continue
+    
+    import pdb; pdb.set_trace()
 
     # windows = []
     # tmp_window, count = [], 0
@@ -148,16 +158,22 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     #             windows.append(tmp_window)
     #             tmp_window, count = [], 0
     print("Calculating mini window features")
-    windows_features = []
+    s_features = []
     # windows_targets = []
-    for i in range(len(windows)):
-        chrom = windows[i][0][0]
-        #import pdb; pdb.set_trace()
-        features = calculate_mini_window(windows[i], mini_window_size)
-        windows_features.append(features)
+    for k in range(len(s)):
+        import pdb; pdb.set_trace()
+        windows = s[k]
+        windows_features = []
+        for i in range(len(windows)):
+            chrom = windows[i][0][0]
+            #import pdb; pdb.set_trace()
+            features = calculate_mini_window(windows[i], mini_window_size)
+            windows_features.append(features)
         # target = calculate_target_features(chrom, features[0], targets)
         # windows_targets.append(target)
-    
+        s_features.append(windows_features)
+
+    import pdb; pdb.set_trace()
     # print("Calculating gaps")
     # gaps = np.zeros(len(windows_features))
     # for i in range(1, len(windows_features)):
@@ -168,7 +184,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
 
     # all_windows_features += windows_features
     # all_windows_targets += windows_targets
-    return windows_features, windows_targets
+    return s_features, windows_targets
 
     # return all_windows_features, all_windows_targets
 
@@ -370,29 +386,29 @@ class Corpus(object):
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
-        try:
-            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
-        except:
-            print("Could not load presaved validation data")
-            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
-            save_data(val_x, val_y, val_in_path, val_tar_path)
+        # try:
+        #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+        # except:
+        #     print("Could not load presaved validation data")
+        #     val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
+        #     save_data(val_x, val_y, val_in_path, val_tar_path)
 
-        try:
-            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
-        except:
-            print("Could not load presaved test data")
-            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
-            save_data(test_x,test_y, test_in_path, test_tar_path)
+        # try:
+        #     test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+        # except:
+        #     print("Could not load presaved test data")
+        #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
+        #     save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
         unique, counts = np.unique(train_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
 
-        unique, counts = np.unique(val_y, return_counts=True)
-        print("VAL TAR: {}".format(dict(zip(unique, counts))))
+        # unique, counts = np.unique(val_y, return_counts=True)
+        # print("VAL TAR: {}".format(dict(zip(unique, counts))))
 
-        unique, counts = np.unique(test_y, return_counts=True)
-        print("TEST TAR: {}".format(dict(zip(unique, counts))))
+        # unique, counts = np.unique(test_y, return_counts=True)
+        # print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
         #import pdb; pdb.set_trace()
         # self.train_dataset = CNVdata(train_x, train_y)
@@ -402,17 +418,17 @@ class Corpus(object):
         self.train_in = train_x
         self.train_tar = train_y
 
-        # self.val_in = train_x
-        # self.val_tar = train_y
+        self.val_in = train_x
+        self.val_tar = train_y
 
-        # self.test_in = train_x
-        # self.test_tar = train_y
+        self.test_in = train_x
+        self.test_tar = train_y
     
-        self.val_in = val_x
-        self.val_tar = val_y
+        # self.val_in = val_x
+        # self.val_tar = val_y
 
-        self.test_in = test_x
-        self.test_tar = test_y
+        # self.test_in = test_x
+        # self.test_tar = test_y
 
 
         
