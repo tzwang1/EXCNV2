@@ -139,7 +139,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
             
             s.append(windows)
             windows_targets.append(target_to_index(targets[tar_pos][3]))
-            tmp_window, count= [], 0
+            windows, tmp_window, count = [], [], 0
             if(tar_pos < len(targets)-1):
                 tar_pos+=1
             else:
