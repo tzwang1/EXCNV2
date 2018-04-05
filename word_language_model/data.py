@@ -144,9 +144,6 @@ def load(num, input_path, target_path, window_size, mini_window_size):
                 tar_pos+=1
             else:
                 break
-    
-    import pdb; pdb.set_trace()
-
     # windows = []
     # tmp_window, count = [], 0
     # print("Getting windows features")
@@ -161,7 +158,6 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     s_features = []
     # windows_targets = []
     for k in range(len(s)):
-        import pdb; pdb.set_trace()
         windows = s[k]
         windows_features = []
         for i in range(len(windows)):
