@@ -104,14 +104,14 @@ if torch.cuda.is_available():
 # num = 100000
 # seq_len = 30
 paths = {}
-paths['train_in'] = args.data_folder + "/" + args.train_in
-paths['train_tar'] = args.data_folder + "/" + args.train_tar
+paths['train_in'] = args.data + "/" + args.train_in
+paths['train_tar'] = args.data + "/" + args.train_tar
 
-paths['val_in'] = args.data_folder + "/" + args.val_in
-paths['val_tar'] = args.data_folder + "/" + args.val_tar
+paths['val_in'] = args.data + "/" + args.val_in
+paths['val_tar'] = args.data + "/" + args.val_tar
 
-paths['test_in'] = args.data_folder + "/" + args.test_in
-paths['test_tar'] = args.data_folder + "/" + args.test_tar
+paths['test_in'] = args.data + "/" + args.test_in
+paths['test_tar'] = args.data + "/" + args.test_tar
 
 corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.data_folder)
 
