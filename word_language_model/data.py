@@ -158,7 +158,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     s_features = []
     # windows_targets = []
     for k in range(len(s)):
-        print("Looking window {} out of {} total".format(k, len(s)))
+        print("Looking at window {} out of {} total".format(k, len(s)))
         windows = s[k]
         windows_features = []
         for i in range(len(windows)):
