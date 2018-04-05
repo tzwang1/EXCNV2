@@ -18,8 +18,11 @@ output_val = "data/good_data/input_val2.out"
 input_test = "data/good_data/input_test.out" 
 output_test = "data/good_data/input_test2.out"
 
-clean(input_train, output_train)
-clean(input_val, output_val)
-clean(input_test, output_test)
+tumour4_in = "data/good_data/tumour4_input.out"
+tumour4_out = "data/good_data/tumour4_input2.out"
 
+#clean(input_train, output_train)
+#clean(input_val, output_val)
+#clean(input_test, output_test)
+clean(tumour4_in, tumour4_out)
 
