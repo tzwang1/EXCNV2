@@ -16,7 +16,7 @@ import data
 import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
-parser.add_argument('--data_folder', type=str, default='data',
+parser.add_argument('--data', type=str, default='data',
                     help='location of the data')
 parser.add_argument('--train_in', type=str, default='train_in.pl',
                     help='location of the input training data')
