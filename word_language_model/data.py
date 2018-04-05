@@ -113,7 +113,6 @@ def load(num, input_path, target_path, window_size, mini_window_size):
         if(targets[i][2] - targets[i][1] < MAX_SIZE):
             small_targets.append(targets[i])
     
-  
     targets = np.array(small_targets)
     tar_pos = 0
     s = []
@@ -131,12 +130,15 @@ def load(num, input_path, target_path, window_size, mini_window_size):
             if count == window_size:
                 windows.append(tmp_window)
                 tmp_window, count = [], 0
+                if len(windows) > 100:
+                    windows = []
+                    continue
         else:
             tmp_window.append(input_[i])
             count += 1
             if count == window_size:
                 windows.append(tmp_window)
-            if len(windows) > 0:
+            if len(windows) > 0 and len(windows) <= 100:
                 s.append(windows)
                 windows_targets.append(target_to_index(targets[tar_pos][3]))
             windows, tmp_window, count = [], [], 0
@@ -383,29 +385,29 @@ class Corpus(object):
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
-        try:
-            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
-        except:
-            print("Could not load presaved validation data")
-            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
-            save_data(val_x, val_y, val_in_path, val_tar_path)
+        # try:
+        #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+        # except:
+        #     print("Could not load presaved validation data")
+        #     val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
+        #     save_data(val_x, val_y, val_in_path, val_tar_path)
 
-        try:
-            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
-        except:
-            print("Could not load presaved test data")
-            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
-            save_data(test_x,test_y, test_in_path, test_tar_path)
+        # try:
+        #     test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+        # except:
+        #     print("Could not load presaved test data")
+        #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
+        #     save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
         unique, counts = np.unique(train_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
 
-        unique, counts = np.unique(val_y, return_counts=True)
-        print("VAL TAR: {}".format(dict(zip(unique, counts))))
+        # unique, counts = np.unique(val_y, return_counts=True)
+        # print("VAL TAR: {}".format(dict(zip(unique, counts))))
 
-        unique, counts = np.unique(test_y, return_counts=True)
-        print("TEST TAR: {}".format(dict(zip(unique, counts))))
+        # unique, counts = np.unique(test_y, return_counts=True)
+        # print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
         # self.train_dataset = CNVdata(train_x, train_y)
         # self.val_dataset = CNVdata(val_x, val_y)
@@ -416,17 +418,17 @@ class Corpus(object):
         self.train_in = train_x
         self.train_tar = train_y
 
-        # self.val_in = train_x
-        # self.val_tar = train_y
+        self.val_in = train_x
+        self.val_tar = train_y
 
-        # self.test_in = train_x
-        # self.test_tar = train_y
+        self.test_in = train_x
+        self.test_tar = train_y
     
-        self.val_in = val_x
-        self.val_tar = val_y
+        # self.val_in = val_x
+        # self.val_tar = val_y
 
-        self.test_in = test_x
-        self.test_tar = test_y
+        # self.test_in = test_x
+        # self.test_tar = test_y
 
 
         
