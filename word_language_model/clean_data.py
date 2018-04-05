@@ -1,8 +1,11 @@
 import pandas as pd
 import argparse
+import data
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
 parser.add_argument('--input', type=str, default='data/input.out',
+                    help='location of the input file data')
+parser.add_argument('--target', type=str, default='data/target.out',
                     help='location of the input file data')
 
 args = parser.parse_args()

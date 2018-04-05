@@ -11,6 +11,7 @@ from torch.autograd import Variable
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from collections import defaultdict
 
 import data
 import conv_model as model
@@ -70,7 +71,7 @@ parser.add_argument('--clip', type=float, default=0.25,
                     help='gradient clipping')
 parser.add_argument('--epochs', type=int, default=40,
                     help='upper epoch limit')
-parser.add_argument('--batch_size', type=int, default=20, metavar='N',
+parser.add_argument('--batch_size', type=int, default=5, metavar='N',
                     help='batch size')
 parser.add_argument('--bptt', type=int, default=50,
                     help='bptt length')
@@ -127,13 +128,19 @@ corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.dat
 # dependence of e. g. 'g' on 'f' can not be learned, but allows more efficient
 # batch processing.
 
+def create_dict(input_data, target_data):
+    d = defaultdict(list)
+    for i in range(len(input_data)):
+        d[len(input_data[i])].append((input_data[i], target_data[i]))
+    
+    return d
+
 def batchify(input_data, target_data, bsz):
     print("Batchifying data....")
     # input_gaps = [data[0] for data in input_data_]
     # input_data = [data[1] for data in input_data_]
 
     # input_gaps = torch.FloatTensor(input_gaps)
-    import pdb; pdb.set_trace()
     input_data = torch.FloatTensor(input_data)
     target_data = torch.FloatTensor(target_data)
 
@@ -169,10 +176,28 @@ eval_batch_size = 10
 # train_in, train_gaps, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
 # val_in, val_gaps, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
 # test_in, test_gaps, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
-import pdb; pdb.set_trace()
-train_in, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
-val_in, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
-test_in, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
+
+# train_in, train_tar = batchify(corpus.train_in, corpus.train_tar, args.batch_size)
+# val_in, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
+# test_in, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
+
+data_in = corpus.train_in + corpus.val_in + corpus.test_in
+data_tar = corpus.train_tar + corpus.val_tar + corpus.test_tar
+
+data_size = len(data_in)
+num_train = int(0.8 * data_size)
+# Split data into training and test
+train_in, test_in = data_in[:num_train], data_in[num_train:]
+train_tar, test_tar = data_tar[:num_train], data_tar[num_train:]
+
+# Split training data into training and validation
+train_in, val_in = train_in[:num_train], train_in[num_train:]
+train_tar, val_tar = train_tar[:num_train], train_tar[num_train:]
+
+
+train_data = create_dict(train_in, train_tar)
+val_data = create_dict(val_in, val_tar)
+test_data = create_dict(test_in, test_tar)
 
 ###############################################################################
 # Build the model
@@ -188,8 +213,8 @@ convNet_params['kernel_w'] = args.kernel_w
 convNet_params['out_channel'] = args.out_channel
 convNet_params['pool_kernel'] = args.pool_kernel
 # conv = model.ConvNet()
-input_height = train_in.shape[2]
-input_width = train_in.shape[3]
+input_height = len(train_in[0][0])
+input_width = len(train_in[0][0][0])
 
 hyperparameters = {}
 hyperparameters['nhid'] = args.nhid
@@ -245,30 +270,48 @@ def get_batch(input_data, target_data, i, evaluation=False):
     # return data, gap, target
     return data, target
 
-def evaluate(input_data, target_data):
+# def evaluate(input_data, target_data):
+def evaluate(dataset):
     # Turn on evaluation mode which disables dropout.
     model.eval()
     total_loss = 0.0
     ntokens = corpus.length
     correct = 0.0
     total = 0.0
-    hidden = model.init_hidden(args.batch_size)
     # hidden = model.init_hidden(eval_batch_size)
     # for i in range(0, data_source.size(0) - 1, args.bptt)
-    for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
-        # data, gap, targets = get_batch(input_data, gap_data, target_data, i)
-        data, targets = get_batch(input_data, target_data, i)
+    # for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
+    #     # data, gap, targets = get_batch(input_data, gap_data, target_data, i)
+    #     data, targets = get_batch(input_data, target_data, i)
+    for key in dataset:
+        input_s, target_s = zip(*dataset[key])
+        input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
+        target_tensors = torch.LongTensor(target_s)
+        #Switching order of input_tensors to be seq_len x batch_size x mini_window x batch_size
+        input_tensors = input_tensors.transpose(0,1).contiguous()
 
-        # output, hidden = model(data, hidden, gap.float())
-        output, hidden = model(data, hidden)
+        num_tensors = input_tensors.shape[0]
+        num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
         
-        total_loss += len(data) * criterion(output.view(-1, ntokens), targets.long().view(-1)).data
-        hidden = repackage_hidden(hidden)
+        for i in range(num_batches):
+            start = i * args.batch_size
+            end = start + args.batch_size
 
-        pred = output.data.max(2, keepdim=True)[1].squeeze(-1)
-        correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
-        total += output.shape[0] * output.shape[1]
-    return total_loss[0] / len(input_data), correct/total
+            data = Variable(torch.stack(input_tensors[start:end]))
+            targets = Variable(target_tensors)
+            # The batch size may be different in each epoch
+            BS = data.size(1)
+            hidden = model.init_hidden(BS)
+
+            output, hidden = model(data, hidden)
+            
+            total_loss += len(data) * criterion(output.view(-1, ntokens), targets.long().view(-1)).data
+            hidden = repackage_hidden(hidden)
+
+            pred = output.data.max(1, keepdim=True)[1].squeeze(-1)
+            correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
+            total += output.shape[0]
+    return total_loss[0] / len(dataset), correct/total
 
 def train():
     # Turn on training mode which enables dropout.
@@ -276,59 +319,58 @@ def train():
     total_loss = 0.0
     start_time = time.time()
     ntokens = corpus.length
-    hidden = model.init_hidden(args.batch_size)
+    # hidden = model.init_hidden(args.batch_size)
     
-    for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
-        # print("Starting training iteration {}".format(i))
-        data, gap, targets = get_batch(train_in, train_gaps, train_tar, i)
-    # data_list = []
-    # gap_list = []
-    # target_list = []
-    # for sample in train_loader:
-    #     data_list.append(sample['input'].float())
-    #     gap_list.append(sample['gap'].float())
-    #     target_list.append(sample['target'].float())
-    #     import pdb; pdb.set_trace()
-    #     if(len(data_list) != args.bptt):
-    #         continue
-    #     else:
-    #         data = Variable(torch.cat(data_list))
-    #         gap = Variable(torch.cat(gap_list))
-    #         targets = Variable(torch.cat(target_list))
-    #         data_list, gap_list, target_list = []
+    # for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
+    #     print("Starting training iteration {}".format(i))
+    #     data, gap, targets = get_batch(train_in, train_gaps, train_tar, i)
+    
+    for key in train_data:
+        input_s, target_s = zip(*train_data[key])
+        input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
+        target_tensors = torch.LongTensor(target_s)
+        #Switching order of input_tensors to be seq_len x batch_size x mini_window x batch_size
+        input_tensors = input_tensors.transpose(0,1).contiguous()
+
+        num_tensors = input_tensors.shape[0]
+        num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
         
-    # for sample in train_loader:
-    #     data = Variable(sample['input'].float())
-    #     gap = Variable(sample['gap'].float())
-    #     targets = Variable(sample['target'])
-        #import pdb; pdb.set_trace()
-        # Starting each batch, we detach the hidden state from how it was previously produced.
-        # If we didn't, the model would try backpropagating all the way to start of the dataset.
-        hidden = repackage_hidden(hidden)
-        model.zero_grad()
-        output, hidden = model(data, hidden, gap)
-        loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
+        for i in range(num_batches):
+            start = i * args.batch_size
+            end = start + args.batch_size
 
-        loss.backward()
-        optimizer.step()
+            data = Variable(torch.stack(input_tensors[start:end]))
+            targets = Variable(target_tensors)
+            # The batch size may be different in each epoch
+            BS = data.size(1)
+            # Starting each batch, we detach the hidden state from how it was previously produced.
+            # If we didn't, the model would try backpropagating all the way to start of the dataset.
+            hidden = model.init_hidden(BS)
+            hidden = repackage_hidden(hidden)
+            model.zero_grad()
+            output, hidden = model(data, hidden)
+            loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
-        # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
-        torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
-        for p in model.parameters():
-            p.data.add_(-lr, p.grad.data)
+            loss.backward()
+            optimizer.step()
 
-        total_loss += loss.data
-        if batch % args.log_interval == 0 and batch > 0:
-            _loss, correct = evaluate(train_in, train_gaps, train_tar.long())
+            # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
+            torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
+            for p in model.parameters():
+                p.data.add_(-lr, p.grad.data)
 
-            cur_loss = total_loss[0] / args.log_interval
-            elapsed = time.time() - start_time
-            print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
-                    'loss {:5.8f} |  train correct {:8.5f}'.format(
-                epoch, batch, len(train_in) // args.bptt, lr,
-                elapsed * 1000 / args.log_interval, cur_loss, correct))
-            total_loss = 0
-            start_time = time.time()
+            total_loss += loss.data
+            if i % args.log_interval == 0 and i > 0:
+                _loss, correct = evaluate(train_data)
+
+                cur_loss = total_loss[0] / args.log_interval
+                elapsed = time.time() - start_time
+                print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
+                        'loss {:5.8f} |  train correct {:8.5f}'.format(
+                    epoch, i, num_batches - 1, lr,
+                    elapsed * 1000 / args.log_interval, cur_loss, correct))
+                total_loss = 0
+                start_time = time.time()
 
 # Loop over epochs.
 lr = args.lr
@@ -345,7 +387,7 @@ try:
         train()
         #import pdb; pdb.set_trace()
         # val_loss = evaluate(val_data)
-        val_loss, correct = evaluate(test_in, test_gaps, test_tar.long())
+        val_loss, correct = evaluate(val_data)
         val_loss_lst.append(val_loss)
         val_correct.append(correct)
         print('-' * 89)
@@ -375,7 +417,7 @@ with open(args.save, 'rb') as f:
     model = torch.load(f)
 
 # Run on test data.
-test_loss, correct = evaluate(test_in, test_gaps, test_tar.long())
+test_loss, correct = evaluate(test_data)
 print('=' * 89)
 print('| End of training | test loss {:5.2f} | test correct {:8.2f}'.format(
     test_loss, correct))

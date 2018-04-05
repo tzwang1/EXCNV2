@@ -5,7 +5,6 @@ import pandas as pd
 import pickle
 from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
-from collections import defaultdict
 
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
@@ -137,9 +136,9 @@ def load(num, input_path, target_path, window_size, mini_window_size):
             count += 1
             if count == window_size:
                 windows.append(tmp_window)
-            
-            s.append(windows)
-            windows_targets.append(target_to_index(targets[tar_pos][3]))
+            if len(windows) > 0:
+                s.append(windows)
+                windows_targets.append(target_to_index(targets[tar_pos][3]))
             windows, tmp_window, count = [], [], 0
             if(tar_pos < len(targets)-1):
                 tar_pos+=1
@@ -340,13 +339,6 @@ def rearrange(input_data):
     
     return new_input_data
 
-def create_dict(input_data, target_data):
-    d = defaultdict(list)
-    for i in range(len(input_data)):
-        d[len(input_data[i])].append(input_data[i], target_data[i])
-    
-    return d
-
 class CNVdata(Dataset):
     def __init__(self, input_data, target_data):
         self.input_data = [data[1] for data in input_data]
@@ -391,49 +383,50 @@ class Corpus(object):
             train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
             save_data(train_x, train_y, train_in_path, train_tar_path)
         
-        # try:
-        #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
-        # except:
-        #     print("Could not load presaved validation data")
-        #     val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
-        #     save_data(val_x, val_y, val_in_path, val_tar_path)
+        try:
+            val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
+        except:
+            print("Could not load presaved validation data")
+            val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
+            save_data(val_x, val_y, val_in_path, val_tar_path)
 
-        # try:
-        #     test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
-        # except:
-        #     print("Could not load presaved test data")
-        #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
-        #     save_data(test_x,test_y, test_in_path, test_tar_path)
+        try:
+            test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
+        except:
+            print("Could not load presaved test data")
+            test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
+            save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
         unique, counts = np.unique(train_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
 
-        # unique, counts = np.unique(val_y, return_counts=True)
-        # print("VAL TAR: {}".format(dict(zip(unique, counts))))
+        unique, counts = np.unique(val_y, return_counts=True)
+        print("VAL TAR: {}".format(dict(zip(unique, counts))))
 
-        # unique, counts = np.unique(test_y, return_counts=True)
-        # print("TEST TAR: {}".format(dict(zip(unique, counts))))
+        unique, counts = np.unique(test_y, return_counts=True)
+        print("TEST TAR: {}".format(dict(zip(unique, counts))))
 
-        #import pdb; pdb.set_trace()
         # self.train_dataset = CNVdata(train_x, train_y)
         # self.val_dataset = CNVdata(val_x, val_y)
         # self.test_dataset = CNVdata(test_x, test_y)
+        # validation_set = create_dict(val_x, val_y)
+        # test_set = create_dict(test_x, test_y)
 
         self.train_in = train_x
         self.train_tar = train_y
 
-        self.val_in = train_x
-        self.val_tar = train_y
+        # self.val_in = train_x
+        # self.val_tar = train_y
 
-        self.test_in = train_x
-        self.test_tar = train_y
+        # self.test_in = train_x
+        # self.test_tar = train_y
     
-        # self.val_in = val_x
-        # self.val_tar = val_y
+        self.val_in = val_x
+        self.val_tar = val_y
 
-        # self.test_in = test_x
-        # self.test_tar = test_y
+        self.test_in = test_x
+        self.test_tar = test_y
 
 
         

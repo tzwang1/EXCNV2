@@ -36,7 +36,6 @@ class RNNModel(nn.Module):
         super(RNNModel, self).__init__()
 
         self.drop = nn.Dropout(dropout)
-        #import pdb; pdb.set_trace()
         stride = cnn_params['stride']
         padding = cnn_params['padding']
         conv_out_channel = cnn_params['out_channel']
@@ -73,7 +72,7 @@ class RNNModel(nn.Module):
 
         if rnn_type in ['LSTM', 'GRU']:
             # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
-            self.rnn = getattr(nn, rnn_type)(fc1_out_size+1, nhid, nlayers, dropout=dropout)
+            self.rnn = getattr(nn, rnn_type)(fc1_out_size, nhid, nlayers, dropout=dropout)
         else:
             try:
                 nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
@@ -81,7 +80,7 @@ class RNNModel(nn.Module):
                 raise ValueError( """An invalid option for `--model` was supplied,
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
             # self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
-            self.rnn = nn.RNN(fc_inp_size+1, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
+            self.rnn = nn.RNN(fc_inp_size, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
         # self.decoder = nn.Linear(nhid, ntoken)
         self.decoder1 = nn.Linear(nhid, decode1_out)
         self.decoder2 = nn.Linear(decode1_out, ntoken)
@@ -113,9 +112,7 @@ class RNNModel(nn.Module):
 
     def forward(self, x, hidden):
         input_list = []
-        # x is in shape (num // batch x batch x seq_len x 2) 
-        # BPTT IMPLEMENTATION
-        #import pdb; pdb.set_trace()
+        # x is in shape seq_len x batch_size x mini_window_size x 2
         for i in range(len(x)):
             input_ = x[i]
             input_ = input_.unsqueeze(1)
@@ -132,7 +129,7 @@ class RNNModel(nn.Module):
             input_ = self.fc1(input_)
             input_ = self.fc2(input_)
             
-            # Concatenate gap
+            # Concatenate gapinpu
             # gap_ = gap[i].unsqueeze(-1)
             # input_ = torch.cat((input_, gap_), 1)
             input_list.append(input_.unsqueeze(0))
