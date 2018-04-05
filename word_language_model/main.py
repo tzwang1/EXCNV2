@@ -16,7 +16,7 @@ import data
 import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
-parser.add_argument('--data_folder', type=str, default='data',
+parser.add_argument('--data', type=str, default='data',
                     help='location of the data')
 parser.add_argument('--train_in', type=str, default='train_in.pl',
                     help='location of the input training data')
@@ -104,16 +104,16 @@ if torch.cuda.is_available():
 # num = 100000
 # seq_len = 30
 paths = {}
-paths['train_in'] = args.data_folder + "/" + args.train_in
-paths['train_tar'] = args.data_folder + "/" + args.train_tar
+paths['train_in'] = args.data + "/" + args.train_in
+paths['train_tar'] = args.data + "/" + args.train_tar
 
-paths['val_in'] = args.data_folder + "/" + args.val_in
-paths['val_tar'] = args.data_folder + "/" + args.val_tar
+paths['val_in'] = args.data + "/" + args.val_in
+paths['val_tar'] = args.data + "/" + args.val_tar
 
-paths['test_in'] = args.data_folder + "/" + args.test_in
-paths['test_tar'] = args.data_folder + "/" + args.test_tar
+paths['test_in'] = args.data + "/" + args.test_in
+paths['test_tar'] = args.data + "/" + args.test_tar
 
-corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.data_folder)
+corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.data)
 
 # Starting from sequential data, batchify arranges the dataset into columns.
 # For instance, with the alphabet as the sequence and batch size 4, we'd get
