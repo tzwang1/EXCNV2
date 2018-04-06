@@ -3,6 +3,7 @@ import argparse
 import data
 from joblib import Parallel, delayed
 import multiprocessing
+import os
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
 parser.add_argument('--input_data', type=str, default='',
@@ -11,6 +12,8 @@ parser.add_argument('--target_data', type=str, default='',
                     help='target file data')
 parser.add_argument('--clean', type=str, default='True',
                     help='clean data')
+parser.add_argument('--output_dir', type=str, default='clean_pickle',
+                    help='output folder for pickle files')
 
 args = parser.parse_args()
 #data_list = pd.read_csv(args.data_list, sep=",", header=None)
@@ -46,7 +49,12 @@ print("Processing data into inputs and targets")
 
 all_data_x, all_data_y = data.load_data(args.input_data, args.target_data, num, window_size, mini_window_size)
 
-data.save_data(all_data_x, all_data_y, args.input_data.replace("out", "pl"), args.target_data.replace("out", "pl"))
+
+input_path = os.path.join(args.output_dir, args.input_data.replace("out", "pl"))
+target_path = os.path.join(args.output_dir, args.target_data.replace("out", "pl"))
+if not os.path.exists(args.output_dir):
+    os.mkdir(args.output_dir)
+data.save_data(all_data_x, all_data_y, input_path, target_path)
 
 #for data_item in all_data:
 #    all_data_x += data_item[0]
