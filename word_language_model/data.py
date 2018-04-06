@@ -9,7 +9,7 @@ from torch.autograd import Variable
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
 
-all_targets = ['gain', 'neutral', 'loss', 'NA']
+all_targets = ['gain', 'neutral', 'loss']
 n_targets = len(all_targets)
 
 # Finds base index from all_bases
@@ -61,7 +61,7 @@ def calculate_mini_window_feature(mini_window):
     #import pdb; pdb.set_trace()
     mini_window = np.array(mini_window)
     depth = np.mean(mini_window[:, -1].astype(float))
-    gc_num = len(np.where((mini_window[:, -2] == 'C') | (mini_window[:, -2] == 'G'))[0])
+    gc_num = len(np.where((mini_window[:, -2] == 'C') | (mini_window[:, -2] == 'G')| (mini_window[:, -2] == 'c') | (mini_window[:, -2] == 'g'))[0])
     gc_ratio = gc_num * 1.0 / len(mini_window)
     return [depth, gc_ratio]
 
@@ -100,9 +100,9 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     MAX_SIZE = 1000000
     
     if(num == -1):
-        input_ = pd.read_csv(input_path, delimiter="\t")
+        input_ = pd.read_csv(input_path, delimiter="\t",names="abcd")
     else:
-        input_ = pd.read_csv(input_path, delimiter="\t", nrows=num)
+        input_ = pd.read_csv(input_path, delimiter="\t", nrows=num, names="abcd")
     
     targets = np.genfromtxt(target_path, dtype=None)
     input_ = np.asarray(input_)
@@ -120,6 +120,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     tmp_window = []
     count = 0
     windows_targets = []
+    #import pdb; pdb.set_trace()
     print("Getting window features")
     for i in range(len(input_)):
         chrom = targets[tar_pos][0]

@@ -44,9 +44,9 @@ mini_window_size = 100
 print("Processing data into inputs and targets")
 #all_data = Parallel(n_jobs=num_cores)(delayed(data.load_data)(data_list[0][i], data_list[1][i], num, window_size, mini_window_size) for i in range(len(data_list)))
 
-all_data_x = data.load_data(args.input_data, args.target_data, num, window_size, mini_window_size)
-import pdb; pdb.set_trace()
-data.save(all_data_x, all_data_y, args.input_data.replace("out", "pl"), args.target_data.replace("out", "pl"))
+all_data_x, all_data_y = data.load_data(args.input_data, args.target_data, num, window_size, mini_window_size)
+
+data.save_data(all_data_x, all_data_y, args.input_data.replace("out", "pl"), args.target_data.replace("out", "pl"))
 
 #for data_item in all_data:
 #    all_data_x += data_item[0]

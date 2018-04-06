@@ -59,7 +59,7 @@ parser.add_argument('--out_channel', type=int, default=5,
                     help='number of output channels for CNN')
 parser.add_argument('--nlayers', type=int, default=2,
                     help='number of layers')
-parser.add_argument('--lr', type=float, default=20,
+parser.add_argument('--lr', type=float, default=0.05,
                     help='initial learning rate')
 parser.add_argument('--fcout1', type=int, default=100,
                     help='fully connected layer 1 output size')
@@ -71,7 +71,7 @@ parser.add_argument('--clip', type=float, default=0.25,
                     help='gradient clipping')
 parser.add_argument('--epochs', type=int, default=40,
                     help='upper epoch limit')
-parser.add_argument('--batch_size', type=int, default=5, metavar='N',
+parser.add_argument('--batch_size', type=int, default=20, metavar='N',
                     help='batch size')
 parser.add_argument('--bptt', type=int, default=50,
                     help='bptt length')
@@ -191,6 +191,7 @@ train_in, test_in = data_in[:num_train], data_in[num_train:]
 train_tar, test_tar = data_tar[:num_train], data_tar[num_train:]
 
 # Split training data into training and validation
+num_train = int(0.8 * num_train)
 train_in, val_in = train_in[:num_train], train_in[num_train:]
 train_tar, val_tar = train_tar[:num_train], train_tar[num_train:]
 
@@ -312,6 +313,7 @@ def evaluate(dataset):
             correct += pred.eq(targets.data.view_as(pred)).cpu().sum()
             total += output.shape[0]
     return total_loss[0] / len(dataset), correct/total
+    # return total_loss / len(dataset), correct/total
 
 def train():
     # Turn on training mode which enables dropout.
@@ -323,7 +325,6 @@ def train():
     
     # for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
     #     print("Starting training iteration {}".format(i))
-    #     data, gap, targets = get_batch(train_in, train_gaps, train_tar, i)
     for key in train_data:
         input_s, target_s = zip(*train_data[key])
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
@@ -401,7 +402,7 @@ try:
             best_val_loss = val_loss
         else:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
-            # lr /= 1.2
+            #lr /= 4
             lr = lr
     fig, ax = plt.subplots( nrows=1, ncols=1)
     ax.plot(val_correct)
