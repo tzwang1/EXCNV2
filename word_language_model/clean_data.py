@@ -22,10 +22,10 @@ def clean(input_path):
 if(args.clean == 'True'):
     print("Cleaning data")
     
-        for i in range(len(data_list)):
-            try:
-                clean(data_list[0][i])
-            except:
+    for i in range(len(data_list)):
+        try:
+            clean(data_list[0][i])
+        except:
                 print("data already cleaned")
 
 all_data_x = []
