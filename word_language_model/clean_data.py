@@ -1,6 +1,8 @@
 import pandas as pd
 import argparse
 import data
+from joblib import Parallel, delayed
+import multiprocessing
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
 parser.add_argument('--data_list', type=str, default='data/input.out',
@@ -19,42 +21,27 @@ def clean(input_path):
             if(len(line) == 4):
                 line[0] = line[0].lstrip('chr')
                 x = pd.concat([x, pd.DataFrame([line])], ignore_index=True)
-                
-    # x = pd.read_csv(input_path, sep='\t', header=None, name='abcd')
-    # x.dropna()
-    # x[x.columns[0]] = x[x.columns[0]].map(lambda x: x.lstrip('chr'))
-    # x[x.columns[2]] = x[x.columns[2]].str.upper()
-    # x[x.columns[3]] = x[x.columns[3]].astype(int)
 
     x.to_csv(input_path, sep='\t', index=False, header=False)
 
+num_cores = multiprocessing.cpu_count()
+
+print("Cleaning data")
 if(args.clean == 'True'):
-    print("Cleaning data")
-    
-    for i in range(len(data_list)):
-        try:
-            print("Cleaning {}".format(data_list[0][i]))
-            clean(data_list[0][i])
-        except:
-            print("data already cleaned")
+    Parallel(n_jobs=num_cores)(delayed(clean)(data_list[0][i]) for i in range(len(data_list)))
 
 all_data_x = []
 all_data_y = []
 num = -1
 window_size = 10000
 mini_window_size = 100
-for i in range(len(data_list)):
-    print("Reading data from {} and {}".format(data_list[0][i], data_list[1][i]))
-    data_x, data_y = data.load_data(data_list[0][i], data_list[1][i], num, window_size, mini_window_size)
-    all_data_x += data_x
-    all_data_y += data_y
+
+print("Processing data into inputs and targets")
+all_data = Parallel(n_jobs=num_cores)(delayed(data.load_data)(data_list[0][i], data_list[1][i], num, window_size, mini_window_size) for i in range(len(data_list)))
+
+for data in all_data:
+    all_data_x += data[0]
+    all_data_y += data[1]
 
 data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
-
-# clean(input_val, output_val)
-# clean(input_test, output_test)
-
-#clean(input_train, output_train)
-#clean(input_val, output_val)
-#clean(input_test, output_test)
 
