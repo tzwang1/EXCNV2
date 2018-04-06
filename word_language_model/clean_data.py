@@ -24,6 +24,7 @@ if(args.clean == 'True'):
     
     for i in range(len(data_list)):
         try:
+            print("Cleaning {}".format(data_list[0][i]))
             clean(data_list[0][i])
         except:
                 print("data already cleaned")
