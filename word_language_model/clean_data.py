@@ -32,7 +32,6 @@ all_data_y = []
 num = -1
 window_size = 10000
 mini_window_size = 100
-import pdb; pdb.set_trace()
 for i in range(len(data_list)):
     data_x, data_y = data.load_data(data_list[0][i], data_list[1][i], num, window_size, mini_window_size)
     all_data_x += data_x
