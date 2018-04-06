@@ -37,7 +37,7 @@ for i in range(len(data_list)):
     all_data_x += data_x
     all_data_y += data_y
 
-data.save_data(all_data_x, all_data_y, 'data/data_x.pl', 'data/data_y.pl')
+data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
 
 # clean(input_val, output_val)
 # clean(input_test, output_test)
