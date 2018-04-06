@@ -21,11 +21,12 @@ def clean(input_path):
 
 if(args.clean == 'True'):
     print("Cleaning data")
-    try:
+    
         for i in range(len(data_list)):
-            clean(data_list[0][i])
-    except:
-        print("data already cleaned")
+            try:
+                clean(data_list[0][i])
+            except:
+                print("data already cleaned")
 
 all_data_x = []
 all_data_y = []
