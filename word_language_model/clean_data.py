@@ -12,7 +12,7 @@ args = parser.parse_args()
 data_list = pd.read_csv(args.data_list, sep=",", header=None)
 
 def clean(input_path):
-    x = pd.read_csv(input_path, sep='\t', header=None, name=['chrom', 'pos', 'base', 'depth'])
+    x = pd.read_csv(input_path, sep='\t', header=None, name='abcd')
     x.dropna()
     x[x.columns[0]] = x[x.columns[0]].map(lambda x: x.lstrip('chr'))
     x[x.columns[2]] = x[x.columns[2]].str.upper()
