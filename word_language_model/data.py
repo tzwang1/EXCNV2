@@ -281,7 +281,7 @@ def load_data(input_path, target_path, num, window_size, mini_window_size):
 
     '''
    
-    print("Loading all the data...")
+    print("Processing data for {} and {}...".format(input_path, target_path))
     x, y = load(num, input_path, target_path, window_size, mini_window_size)
          
     return x, y

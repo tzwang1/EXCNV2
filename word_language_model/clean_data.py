@@ -14,6 +14,7 @@ args = parser.parse_args()
 data_list = pd.read_csv(args.data_list, sep=",", header=None)
 
 def clean(input_path):
+    print("Cleaning {}".format(input_pat))
     x = pd.DataFrame()
     with open(input_path) as f:
         for line in f:
