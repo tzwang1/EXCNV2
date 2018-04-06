@@ -39,9 +39,9 @@ mini_window_size = 100
 print("Processing data into inputs and targets")
 all_data = Parallel(n_jobs=num_cores)(delayed(data.load_data)(data_list[0][i], data_list[1][i], num, window_size, mini_window_size) for i in range(len(data_list)))
 
-for data in all_data:
-    all_data_x += data[0]
-    all_data_y += data[1]
+for data_item in all_data:
+    all_data_x += data_item[0]
+    all_data_y += data_item[1]
 
 data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
 
