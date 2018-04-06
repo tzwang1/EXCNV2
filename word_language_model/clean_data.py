@@ -12,7 +12,8 @@ args = parser.parse_args()
 data_list = pd.read_csv(args.data_list, sep=",", header=None)
 
 def clean(input_path):
-    x = pd.read_csv(input_path, sep='\t', header=None)
+    x = pd.read_csv(input_path, sep='\t', header=None, name=['chrom', 'pos', 'base', 'depth'])
+    x.dropna()
     x[x.columns[0]] = x[x.columns[0]].map(lambda x: x.lstrip('chr'))
     x[x.columns[2]] = x[x.columns[2]].str.upper()
     # x[x.columns[3]] = x[x.columns[3]].astype(int)
@@ -27,7 +28,7 @@ if(args.clean == 'True'):
             print("Cleaning {}".format(data_list[0][i]))
             clean(data_list[0][i])
         except:
-                print("data already cleaned")
+            print("data already cleaned")
 
 all_data_x = []
 all_data_y = []
