@@ -12,10 +12,19 @@ args = parser.parse_args()
 data_list = pd.read_csv(args.data_list, sep=",", header=None)
 
 def clean(input_path):
-    x = pd.read_csv(input_path, sep='\t', header=None, name='abcd')
-    x.dropna()
-    x[x.columns[0]] = x[x.columns[0]].map(lambda x: x.lstrip('chr'))
-    x[x.columns[2]] = x[x.columns[2]].str.upper()
+    x = pd.DataFrame()
+    with open(input_path) as f:
+        for line in f:
+            import pdb; pdb.set_trace()
+            line = line.strip().split('\t')
+            if(len(line) == 4):
+                line[0] = line[0].lstrip('chr')
+                x = pd.concat([x, pd.DataFrame([line])], ignore_index=True)
+                
+    # x = pd.read_csv(input_path, sep='\t', header=None, name='abcd')
+    # x.dropna()
+    # x[x.columns[0]] = x[x.columns[0]].map(lambda x: x.lstrip('chr'))
+    # x[x.columns[2]] = x[x.columns[2]].str.upper()
     # x[x.columns[3]] = x[x.columns[3]].astype(int)
 
     x.to_csv(input_path, sep='\t', index=False, header=False)
