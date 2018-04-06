@@ -15,7 +15,6 @@ def clean(input_path):
     x = pd.DataFrame()
     with open(input_path) as f:
         for line in f:
-            import pdb; pdb.set_trace()
             line = line.strip().split('\t')
             if(len(line) == 4):
                 line[0] = line[0].lstrip('chr')
