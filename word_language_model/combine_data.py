@@ -32,7 +32,6 @@ for file in glob.glob(target_path):
         data_y = pickle.load(f)
     all_data_y += data_y
 
-import pdb; pdb.set_trace()
-data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
+data.save_data(all_data_x, all_data_y, os.path.join(args.data,'data_x.pl'), os.path.join(args.data,'data_y.pl'))
 
 
