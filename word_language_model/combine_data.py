@@ -22,14 +22,15 @@ target_data_list = glob.glob(target_path)
 
 for file in glob.glob(input_path):
     print(file)
-    # data_x = pickle.load(file)
-    # all_data_x += data_x
+    data_x = pickle.load(file)
+    all_data_x += data_x
 
 for file in glob.glob(target_path):
     print(file)
-    # data_y = pickle.load(file)
-    # all_data_y += data_y
+    data_y = pickle.load(file)
+    all_data_y += data_y
 
-#data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
+import pdb; pdb.set_trace()
+data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
 
 
