@@ -12,6 +12,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from collections import defaultdict
+import os
 
 import data
 import conv_model as model
@@ -19,18 +20,18 @@ import conv_model as model
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
 parser.add_argument('--data', type=str, default='data',
                     help='location of the data')
-parser.add_argument('--train_in', type=str, default='train_in.pl',
+parser.add_argument('--data_in', type=str, default='data_x.pl',
                     help='location of the input training data')
-parser.add_argument('--train_tar', type=str, default='train_tar.pl',
+parser.add_argument('--data_tar', type=str, default='data_y.pl',
                     help='location of the target training data')
-parser.add_argument('--val_in', type=str, default='val_in.pl',
-                    help='location of the input validation data')
-parser.add_argument('--val_tar', type=str, default='val_tar.pl',
-                    help='location of the target validation data')
-parser.add_argument('--test_in', type=str, default='test_in.pl',
-                    help='location of the input testing data')
-parser.add_argument('--test_tar', type=str, default='test_tar.pl',
-                    help='location of the target testing data')
+# parser.add_argument('--val_in', type=str, default='val_in.pl',
+#                     help='location of the input validation data')
+# parser.add_argument('--val_tar', type=str, default='val_tar.pl',
+#                     help='location of the target validation data')
+# parser.add_argument('--test_in', type=str, default='test_in.pl',
+#                     help='location of the input testing data')
+# parser.add_argument('--test_tar', type=str, default='test_tar.pl',
+#                     help='location of the target testing data')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
 parser.add_argument('--size', type=int, default=5,
@@ -105,14 +106,16 @@ if torch.cuda.is_available():
 # num = 100000
 # seq_len = 30
 paths = {}
-paths['train_in'] = args.data + "/" + args.train_in
-paths['train_tar'] = args.data + "/" + args.train_tar
+paths['data_in'] = os.path.join(args.data, args.data_in)
+paths['data_tar'] = os.path.join(args.data, args.data_tar)
+# paths['train_in'] = args.data + "/" + args.train_in
+# paths['train_tar'] = args.data + "/" + args.train_tar
 
-paths['val_in'] = args.data + "/" + args.val_in
-paths['val_tar'] = args.data + "/" + args.val_tar
+# paths['val_in'] = args.data + "/" + args.val_in
+# paths['val_tar'] = args.data + "/" + args.val_tar
 
-paths['test_in'] = args.data + "/" + args.test_in
-paths['test_tar'] = args.data + "/" + args.test_tar
+# paths['test_in'] = args.data + "/" + args.test_in
+# paths['test_tar'] = args.data + "/" + args.test_tar
 
 corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.data)
 
@@ -181,8 +184,11 @@ eval_batch_size = 10
 # val_in, val_tar = batchify(corpus.val_in, corpus.val_tar, args.batch_size)
 # test_in, test_tar = batchify(corpus.test_in, corpus.test_tar, args.batch_size)
 
-data_in = corpus.train_in + corpus.val_in + corpus.test_in
-data_tar = corpus.train_tar + corpus.val_tar + corpus.test_tar
+# data_in = corpus.train_in + corpus.val_in + corpus.test_in
+# data_tar = corpus.train_tar + corpus.val_tar + corpus.test_tar
+
+data_in = corpus.data_x
+data_tar = corpus.data_y
 
 data_size = len(data_in)
 num_train = int(0.8 * data_size)
@@ -195,6 +201,17 @@ num_train = int(0.8 * num_train)
 train_in, val_in = train_in[:num_train], train_in[num_train:]
 train_tar, val_tar = train_tar[:num_train], train_tar[num_train:]
 
+print("=" * 89)
+print("TARGET VALUE SPREAD")
+unique, counts = np.unique(train_tar, return_counts=True)
+print("TRAIN: {}".format(dict(zip(unique, counts))))
+
+unique, counts = np.unique(val_tar, return_counts=True)
+print("VALIDATION: {}".format(dict(zip(unique, counts))))
+
+unique, counts = np.unique(test_tar, return_counts=True)
+print("TEST: {}".format(dict(zip(unique, counts))))
+print("=" * 89)
 
 train_data = create_dict(train_in, train_tar)
 val_data = create_dict(val_in, val_tar)

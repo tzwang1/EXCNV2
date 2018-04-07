@@ -361,30 +361,39 @@ class Corpus(object):
     def __init__(self, num, window_size, mini_window_size, paths, data_folder):
         self.length = n_targets
 
-        train_in_txt = data_folder + "/input_train.out"
-        train_tar_txt = data_folder + "/target_train.out"
+        # train_in_txt = data_folder + "/input_train.out"
+        # train_tar_txt = data_folder + "/target_train.out"
 
-        val_in_txt = data_folder + "/input_val.out"
-        val_tar_txt = data_folder + "/target_val.out"
+        # val_in_txt = data_folder + "/input_val.out"
+        # val_tar_txt = data_folder + "/target_val.out"
 
-        test_in_txt = data_folder + "/input_test.out"
-        test_tar_txt = data_folder + "/target_test.out"
+        # test_in_txt = data_folder + "/input_test.out"
+        # test_tar_txt = data_folder + "/target_test.out"
 
-        train_in_path = paths['train_in']
-        train_tar_path = paths['train_tar']
+        # train_in_path = paths['train_in']
+        # train_tar_path = paths['train_tar']
 
-        val_in_path = paths['val_in']
-        val_tar_path = paths['val_tar']
+        # val_in_path = paths['val_in']
+        # val_tar_path = paths['val_tar']
 
-        test_in_path = paths['test_in']
-        test_tar_path = paths['test_tar']
+        # test_in_path = paths['test_in']
+        # test_tar_path = paths['test_tar']
 
+        data_in_path = paths['data_in']
+        data_tar_path = paths['data_tar']
         try:
-            train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
+            data_x, data_y = load_data_from_file(data_in_path, data_tar_path)
         except:
             print("Could not load presaved training data")
-            train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
-            save_data(train_x, train_y, train_in_path, train_tar_path)
+            # train_,x train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
+            # save_data(train_x, train_y, train_in_path, train_tar_path)
+
+        # try:
+        #     train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
+        # except:
+        #     print("Could not load presaved training data")
+        #     train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
+        #     save_data(train_x, train_y, train_in_path, train_tar_path)
         
         # try:
         #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
@@ -401,7 +410,7 @@ class Corpus(object):
         #     save_data(test_x,test_y, test_in_path, test_tar_path)
 
         print("TARGET VALUES")
-        unique, counts = np.unique(train_y, return_counts=True)
+        unique, counts = np.unique(data_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
 
         # unique, counts = np.unique(val_y, return_counts=True)
@@ -416,14 +425,17 @@ class Corpus(object):
         # validation_set = create_dict(val_x, val_y)
         # test_set = create_dict(test_x, test_y)
 
-        self.train_in = train_x
-        self.train_tar = train_y
+        self.data_x = data_x
+        self.data_y = data_y
 
-        self.val_in = train_x
-        self.val_tar = train_y
+        # self.train_in = train_x
+        # self.train_tar = train_y
 
-        self.test_in = train_x
-        self.test_tar = train_y
+        # self.val_in = train_x
+        # self.val_tar = train_y
+
+        # self.test_in = train_x
+        # self.test_tar = train_y
     
         # self.val_in = val_x
         # self.val_tar = val_y
