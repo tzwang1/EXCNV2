@@ -14,8 +14,8 @@ args = parser.parse_args()
 all_data_x = []
 all_data_y = []
 
-input_path = os.path.join(args.data, "*.input.pl")
-target_path = os.path.join(args.data, "*.tar.pl")
+input_path = os.path.join(args.data, "*_input.pl")
+target_path = os.path.join(args.data, "*_tar.pl")
 
 input_data_list = glob.glob(input_path)
 target_data_list = glob.glob(target_path)
