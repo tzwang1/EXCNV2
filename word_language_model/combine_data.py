@@ -29,7 +29,7 @@ for file in glob.glob(input_path):
 for file in glob.glob(target_path):
     print(file)
     with open(file) as f:
-        data_y = pickle.load(file)
+        data_y = pickle.load(f)
     all_data_y += data_y
 
 import pdb; pdb.set_trace()
