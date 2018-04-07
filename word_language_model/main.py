@@ -60,7 +60,7 @@ parser.add_argument('--out_channel', type=int, default=5,
                     help='number of output channels for CNN')
 parser.add_argument('--nlayers', type=int, default=2,
                     help='number of layers')
-parser.add_argument('--lr', type=float, default=0.05,
+parser.add_argument('--lr', type=float, default=20,
                     help='initial learning rate')
 parser.add_argument('--fcout1', type=int, default=100,
                     help='fully connected layer 1 output size')
@@ -217,6 +217,8 @@ train_data = create_dict(train_in, train_tar)
 val_data = create_dict(val_in, val_tar)
 test_data = create_dict(test_in, test_tar)
 
+#import pdb; pdb.set_trace()
+
 ###############################################################################
 # Build the model
 ###############################################################################
@@ -369,7 +371,7 @@ def train():
             loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
 
             loss.backward()
-            optimizer.step()
+            #optimizer.step()
 
             # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
             torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
@@ -419,8 +421,8 @@ try:
             best_val_loss = val_loss
         else:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
-            #lr /= 4
-            lr = lr
+            lr /= 4
+            #lr = lr
     fig, ax = plt.subplots( nrows=1, ncols=1)
     ax.plot(val_correct)
     fig.savefig('val_correct.png')
