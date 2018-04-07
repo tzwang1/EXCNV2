@@ -110,7 +110,7 @@ def load(num, input_path, target_path, window_size, mini_window_size):
     
     small_targets = []
     for i in range(len(targets)):
-        if(targets[i][2] - targets[i][1] < MAX_SIZE):
+        if(int(targets[i][2]) - int(targets[i][1]) < MAX_SIZE):
             small_targets.append(targets[i])
     
     targets = np.array(small_targets)
