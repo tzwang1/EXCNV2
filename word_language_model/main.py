@@ -88,6 +88,8 @@ parser.add_argument('--log_interval', type=int, default=1, metavar='N',
                     help='report interval')
 parser.add_argument('--save', type=str,  default='model.pt',
                     help='path to save the final model')
+parser.add_argument('--show_every', type=int,  default=10,
+                    help='how many epochs to train on before calculating training and val correct')
 args = parser.parse_args()
 
 # Set the random seed manually for reproducibility.
@@ -217,8 +219,6 @@ train_data = create_dict(train_in, train_tar)
 val_data = create_dict(val_in, val_tar)
 test_data = create_dict(test_in, test_tar)
 
-#import pdb; pdb.set_trace()
-
 ###############################################################################
 # Build the model
 ###############################################################################
@@ -249,7 +249,7 @@ if args.cuda:
 criterion = nn.CrossEntropyLoss()
 # optimizer = optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
 # optimizer_conv = torch.optim.Adam(conv.parameters(), lr=1e-4, weight_decay=1e-5)
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-6)
 
 ###############################################################################
 # Training code
@@ -298,17 +298,13 @@ def evaluate(dataset):
     ntokens = corpus.length
     correct = 0.0
     total = 0.0
-    # hidden = model.init_hidden(eval_batch_size)
-    # for i in range(0, data_source.size(0) - 1, args.bptt)
-    # for batch, i in enumerate(range(0, input_data.size(0) - 1, args.bptt)):
-    #     # data, gap, targets = get_batch(input_data, gap_data, target_data, i)
-    #     data, targets = get_batch(input_data, target_data, i)
+
     for key in dataset:
+        if(key >= 29):
+            continue
         input_s, target_s = zip(*dataset[key])
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
         target_tensors = torch.LongTensor(target_s)
-        #Switching order of input_tensors to be seq_len x batch_size x mini_window x batch_size
-        input_tensors = input_tensors.transpose(0,1).contiguous()
 
         num_tensors = input_tensors.shape[0]
         num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
@@ -318,11 +314,10 @@ def evaluate(dataset):
             end = start + args.batch_size
 
             data = Variable(torch.stack(input_tensors[start:end]))
-            targets = Variable(target_tensors)
+            targets = Variable(target_tensors[start:end])
             # The batch size may be different in each epoch
-            BS = data.size(1)
+            BS = data.size(0)
             hidden = model.init_hidden(BS)
-
             output, hidden = model(data, hidden)
             
             total_loss += len(data) * criterion(output.view(-1, ntokens), targets.long().view(-1)).data
@@ -345,12 +340,12 @@ def train():
     # for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
     #     print("Starting training iteration {}".format(i))
     for key in train_data:
+        if(key >= 29):
+            continue
         input_s, target_s = zip(*train_data[key])
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
         target_tensors = torch.LongTensor(target_s)
-        #Switching order of input_tensors to be seq_len x batch_size x mini_window x batch_size
-        input_tensors = input_tensors.transpose(0,1).contiguous()
-
+        # input_tensors = input_tensors.transpose(0,1).contiguous()
         num_tensors = input_tensors.shape[0]
         num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
         
@@ -359,24 +354,24 @@ def train():
             end = start + args.batch_size
 
             data = Variable(torch.stack(input_tensors[start:end]))
-            targets = Variable(target_tensors)
+            targets = Variable(target_tensors[start:end])
             # The batch size may be different in each epoch
-            BS = data.size(1)
+            BS = data.size(0)
             # Starting each batch, we detach the hidden state from how it was previously produced.
             # If we didn't, the model would try backpropagating all the way to start of the dataset.
             hidden = model.init_hidden(BS)
             hidden = repackage_hidden(hidden)
             model.zero_grad()
+            
             output, hidden = model(data, hidden)
             loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
-
             loss.backward()
-            #optimizer.step()
 
             # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
             torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
-            for p in model.parameters():
-                p.data.add_(-lr, p.grad.data)
+            # for p in model.parameters():
+            #     p.data.add_(-lr, p.grad.data)
+            optimizer.step()
 
             total_loss += loss.data
             if i % args.log_interval == 0 and i > 0:
@@ -384,18 +379,19 @@ def train():
 
                 cur_loss = total_loss[0] / args.log_interval
                 elapsed = time.time() - start_time
-                print('| epoch {:3d} | {:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
-                        'loss {:5.8f} |  train correct {:8.5f}'.format(
-                    epoch, i, num_batches - 1, lr,
-                    elapsed * 1000 / args.log_interval, cur_loss, correct))
+                print('| epoch {:3d} |{:5d}/{:5d} batches | lr {:02.7f} | ms/batch {:5.2f} | '
+                        'loss {:5.8f} |  train correct {:8.5f} | sequence length {}'.format(
+                    epoch, i, num_batches-1, lr,
+                    elapsed * 1000 / args.log_interval, _loss, correct, key))
                 total_loss = 0
                 start_time = time.time()
 
 # Loop over epochs.
 lr = args.lr
 best_val_loss = None
+val_loss = 0
 val_loss_lst = []
-val_correct = []
+val_correct_lst = []
 train_loss_lst = []
 # At any point you can hit Ctrl + C to break out of training early.
 try:
@@ -406,14 +402,21 @@ try:
         train()
         #import pdb; pdb.set_trace()
         # val_loss = evaluate(val_data)
-        val_loss, correct = evaluate(val_data)
-        val_loss_lst.append(val_loss)
-        val_correct.append(correct)
-        print('-' * 89)
-        print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.5f} | '
-                'val correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
-                                             val_loss, correct))
-        print('-' * 89)
+        if(epoch % args.show_every == 0):
+            train_loss, train_correct = evaluate(train_data)
+            val_loss, val_correct = evaluate(val_data)
+            val_loss_lst.append(val_loss)
+            val_correct_lst.append(val_correct)
+            print('-' * 89)
+            print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | train loss {:5.5f} | '
+                    'train correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
+                                                train_loss, train_correct))
+            print('-' * 89)
+            print('-' * 89)
+            print('| end of epoch {:3d} | lr {} |  time: {:5.2f}s | valid loss {:5.5f} | '
+                    'val correct {:8.2f}'.format(epoch,lr, (time.time() - epoch_start_time),
+                                                val_loss, val_correct))
+            print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
         if not best_val_loss or val_loss < best_val_loss:
             with open(args.save, 'wb') as f:
@@ -421,8 +424,8 @@ try:
             best_val_loss = val_loss
         else:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
-            lr /= 4
-            #lr = lr
+            #lr /= 4
+            lr = lr
     fig, ax = plt.subplots( nrows=1, ncols=1)
     ax.plot(val_correct)
     fig.savefig('val_correct.png')
