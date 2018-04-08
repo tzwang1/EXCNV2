@@ -88,6 +88,8 @@ parser.add_argument('--log_interval', type=int, default=1, metavar='N',
                     help='report interval')
 parser.add_argument('--save', type=str,  default='model.pt',
                     help='path to save the final model')
+parser.add_argument('--show_every', type=int,  default=10,
+                    help='how many epochs to train on before calculating training and val correct')
 args = parser.parse_args()
 
 # Set the random seed manually for reproducibility.
@@ -400,7 +402,7 @@ try:
         train()
         #import pdb; pdb.set_trace()
         # val_loss = evaluate(val_data)
-        if(epoch % 100 == 0):
+        if(epoch % args.show_every == 0):
             train_loss, train_correct = evaluate(train_data)
             val_loss, val_correct = evaluate(val_data)
             val_loss_lst.append(val_loss)
