@@ -17,21 +17,13 @@ import os
 import data
 import conv_model as model
 
-parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
+parser = argparse.ArgumentParser(description='PyTorch RNN/LSTM CNV detection Model')
 parser.add_argument('--data', type=str, default='data',
                     help='location of the data')
 parser.add_argument('--data_in', type=str, default='data_x.pl',
                     help='location of the input training data')
 parser.add_argument('--data_tar', type=str, default='data_y.pl',
                     help='location of the target training data')
-# parser.add_argument('--val_in', type=str, default='val_in.pl',
-#                     help='location of the input validation data')
-# parser.add_argument('--val_tar', type=str, default='val_tar.pl',
-#                     help='location of the target validation data')
-# parser.add_argument('--test_in', type=str, default='test_in.pl',
-#                     help='location of the input testing data')
-# parser.add_argument('--test_tar', type=str, default='test_tar.pl',
-#                     help='location of the target testing data')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
 parser.add_argument('--size', type=int, default=5,
@@ -367,6 +359,7 @@ def train():
             
             output, hidden = model(data, hidden)
             loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
+            loss /= float(data.size(1))
             loss.backward()
 
             # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
