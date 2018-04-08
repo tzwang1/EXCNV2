@@ -408,7 +408,6 @@ class Corpus(object):
         #     print("Could not load presaved test data")
         #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
         #     save_data(test_x,test_y, test_in_path, test_tar_path)
-
         print("TARGET VALUES")
         unique, counts = np.unique(data_y, return_counts=True)
         print("TRAIN TAR: {}".format(dict(zip(unique, counts))))

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+import math
 
 # class ConvNet(nn.Module):
 #     def __init__(self):
@@ -72,7 +73,7 @@ class RNNModel(nn.Module):
 
         if rnn_type in ['LSTM', 'GRU']:
             # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
-            self.rnn = getattr(nn, rnn_type)(fc1_out_size, nhid, nlayers, dropout=dropout)
+            self.rnn = getattr(nn, rnn_type)(fc2_out_size, nhid, nlayers, dropout=dropout)
         else:
             try:
                 nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
@@ -80,7 +81,7 @@ class RNNModel(nn.Module):
                 raise ValueError( """An invalid option for `--model` was supplied,
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
             # self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
-            self.rnn = nn.RNN(fc_inp_size, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
+            self.rnn = nn.RNN(fc2_out_size, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
         # self.decoder = nn.Linear(nhid, ntoken)
         self.decoder1 = nn.Linear(nhid, decode1_out)
         self.decoder2 = nn.Linear(decode1_out, ntoken)
@@ -112,6 +113,9 @@ class RNNModel(nn.Module):
 
     def forward(self, x, hidden):
         input_list = []
+        # x is in shape batch_size x seq_len x mini_window_size x 2
+        #Switching order of input_tensors to be seq_len x batch_size x mini_window x batch_size
+        x = x.transpose(0,1).contiguous()
         # x is in shape seq_len x batch_size x mini_window_size x 2
         for i in range(len(x)):
             input_ = x[i]
@@ -119,7 +123,6 @@ class RNNModel(nn.Module):
             input_ = self.conv2d1(input_)
             input_ = input_.squeeze(-1)
             input_ = self.maxpool1(input_)
-            # import pdb; pdb.set_trace()
             # input_ = input_.squeeze(-1)
             input_ = self.conv2d2(input_)
             input_ = input_.squeeze(-1)
@@ -129,14 +132,10 @@ class RNNModel(nn.Module):
             input_ = self.fc1(input_)
             input_ = self.fc2(input_)
             
-            # Concatenate gapinpu
-            # gap_ = gap[i].unsqueeze(-1)
-            # input_ = torch.cat((input_, gap_), 1)
             input_list.append(input_.unsqueeze(0))
     
         input_ = torch.cat(input_list, 0)
         
-        #import pdb; pdb.set_trace()
         output, hidden = self.rnn(input_, hidden)
         # output = self.drop(output)
         output = output[-1] # Take the last output
