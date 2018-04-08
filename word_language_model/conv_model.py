@@ -37,43 +37,44 @@ class RNNModel(nn.Module):
         super(RNNModel, self).__init__()
 
         self.drop = nn.Dropout(dropout)
-        stride = cnn_params['stride']
-        padding = cnn_params['padding']
-        conv_out_channel = cnn_params['out_channel']
-        conv_kernel_height = cnn_params['kernel_h']
-        conv_kernel_width = cnn_params['kernel_w']
-        conv_pooling_kernel = cnn_params['pool_kernel']
+        self.stride = cnn_params['stride']
+        self.padding = cnn_params['padding']
+        self.conv_out_channel = cnn_params['out_channel']
+        self.conv_kernel_height = cnn_params['kernel_h']
+        self.conv_kernel_width = cnn_params['kernel_w']
+        self.conv_pooling_kernel = cnn_params['pool_kernel']
+        self.input_height = input_height
+        self.input_width = input_width
+        self.ninp = self.input_height * self.input_width
         
-        ninp = input_height * input_width
-        
-        nhid = hyperparameters['nhid']
-        fc1_out_size = hyperparameters['fcout1']
-        fc2_out_size = hyperparameters['fcout2']
-        decode1_out = hyperparameters['decode1']
+        self.nhid = hyperparameters['nhid']
+        self.fc1_out_size = hyperparameters['fcout1']
+        self.fc2_out_size = hyperparameters['fcout2']
+        self.decode1_out = hyperparameters['decode1']
 
-        conv1_out_height= int(((input_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel)
-        conv1_out_width = int(((input_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel)
+        self.conv1_out_height= int(((self.input_height - self.conv_kernel_height + 2*self.padding)/self.stride + 1)/self.conv_pooling_kernel)
+        self.conv1_out_width = int(((self.input_width - self.conv_kernel_width + 2*self.padding)/self.stride + 1)/self.conv_pooling_kernel)
 
-        conv2_out_height = int(((conv1_out_height - conv_kernel_height + 2*padding)/stride + 1)/conv_pooling_kernel)
+        self.conv2_out_height = int(((self.conv1_out_height - self.conv_kernel_height + 2*self.padding)/self.stride + 1)/self.conv_pooling_kernel)
         # conv2_out_width = int(((conv1_out_width - conv_kernel_width + 2*padding)/stride + 1)/conv_pooling_kernel)
-        conv2_out_width = conv1_out_width
+        self.conv2_out_width = self.conv1_out_width
 
-        conv1_out_size = int(conv_out_channel * conv1_out_height * conv1_out_width)
-        conv2_out_size = int(conv_out_channel*2 * conv2_out_height * conv2_out_width)
+        self.conv1_out_size = int(self.conv_out_channel * self.conv1_out_height * self.conv1_out_width)
+        self.conv2_out_size = int(self.conv_out_channel*2 * self.conv2_out_height * self.conv2_out_width)
 
-        self.conv2d1 = nn.Conv2d(1, conv_out_channel, (conv_kernel_height, conv_kernel_width))
-        self.maxpool1 = nn.MaxPool2d(conv_pooling_kernel)
-        self.conv2d2 = nn.Conv2d(conv_out_channel, conv_out_channel*2, (conv_kernel_height, 1))
-        self.maxpool2 = nn.MaxPool1d(conv_pooling_kernel)
+        self.conv2d1 = nn.Conv2d(1, self.conv_out_channel, (self.conv_kernel_height, self.conv_kernel_width))
+        self.maxpool1 = nn.MaxPool2d(self.conv_pooling_kernel)
+        self.conv2d2 = nn.Conv2d(self.conv_out_channel, self.conv_out_channel*2, (self.conv_kernel_height, 1))
+        self.maxpool2 = nn.MaxPool1d(self.conv_pooling_kernel)
 
         #import pdb; pdb.set_trace()
         # self.fc1 = nn.Linear(conv1_out_size, fc1_out_size)
-        self.fc1 = nn.Linear(conv2_out_size, fc1_out_size)
-        self.fc2 = nn.Linear(fc1_out_size, fc2_out_size)
+        self.fc1 = nn.Linear(self.conv2_out_size, self.fc1_out_size)
+        self.fc2 = nn.Linear(self.fc1_out_size, self.fc2_out_size)
 
         if rnn_type in ['LSTM', 'GRU']:
             # self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
-            self.rnn = getattr(nn, rnn_type)(fc2_out_size, nhid, nlayers, dropout=dropout)
+            self.rnn = getattr(nn, rnn_type)(self.fc2_out_size, self.nhid, nlayers, dropout=dropout)
         else:
             try:
                 nonlinearity = {'RNN_TANH': 'tanh', 'RNN_RELU': 'relu'}[rnn_type]
@@ -83,8 +84,8 @@ class RNNModel(nn.Module):
             # self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
             self.rnn = nn.RNN(fc2_out_size, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
         # self.decoder = nn.Linear(nhid, ntoken)
-        self.decoder1 = nn.Linear(nhid, decode1_out)
-        self.decoder2 = nn.Linear(decode1_out, ntoken)
+        self.decoder1 = nn.Linear(self.nhid, self.decode1_out)
+        self.decoder2 = nn.Linear(self.decode1_out, ntoken)
 
         # Optionally tie weights as in:
         # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
@@ -100,7 +101,6 @@ class RNNModel(nn.Module):
         self.init_weights()
 
         self.rnn_type = rnn_type
-        self.nhid = nhid
         self.nlayers = nlayers
 
     def init_weights(self):
@@ -135,9 +135,8 @@ class RNNModel(nn.Module):
             input_list.append(input_.unsqueeze(0))
     
         input_ = torch.cat(input_list, 0)
-        
         output, hidden = self.rnn(input_, hidden)
-        # output = self.drop(output)
+        output = self.drop(output)
         output = output[-1] # Take the last output
         # print(output.shape)
         #decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))

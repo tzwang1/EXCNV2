@@ -300,13 +300,14 @@ def evaluate(dataset):
     total = 0.0
 
     for key in dataset:
-        if(key >= 29):
-            continue
         input_s, target_s = zip(*dataset[key])
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
+        #input_tensors = input_tensors.transpose(0,1).contiguous()
         target_tensors = torch.LongTensor(target_s)
 
         num_tensors = input_tensors.shape[0]
+        #num_tensors = input_tensors.shape[1]
+        
         num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
         
         for i in range(num_batches):
@@ -317,6 +318,7 @@ def evaluate(dataset):
             targets = Variable(target_tensors[start:end])
             # The batch size may be different in each epoch
             BS = data.size(0)
+            #BS = data.size(1)
             hidden = model.init_hidden(BS)
             output, hidden = model(data, hidden)
             
@@ -337,16 +339,13 @@ def train():
     ntokens = corpus.length
     # hidden = model.init_hidden(args.batch_size)
     
-    # for batch, i in enumerate(range(0, train_in.size(0) - 1, args.bptt)):
-    #     print("Starting training iteration {}".format(i))
     for key in train_data:
-        if(key >= 29):
-            continue
         input_s, target_s = zip(*train_data[key])
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
         target_tensors = torch.LongTensor(target_s)
-        # input_tensors = input_tensors.transpose(0,1).contiguous()
+        #input_tensors = input_tensors.transpose(0,1).contiguous()
         num_tensors = input_tensors.shape[0]
+        #num_tensors = input_tensors.shape[1]
         num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
         
         for i in range(num_batches):
@@ -355,8 +354,11 @@ def train():
 
             data = Variable(torch.stack(input_tensors[start:end]))
             targets = Variable(target_tensors[start:end])
+            #targets = Variable(target_tensors)
             # The batch size may be different in each epoch
             BS = data.size(0)
+            #BS = data.size(1)
+            
             # Starting each batch, we detach the hidden state from how it was previously produced.
             # If we didn't, the model would try backpropagating all the way to start of the dataset.
             hidden = model.init_hidden(BS)
@@ -425,6 +427,7 @@ try:
         else:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
             #lr /= 4
+            #lr /=1.001
             lr = lr
     fig, ax = plt.subplots( nrows=1, ncols=1)
     ax.plot(val_correct)
