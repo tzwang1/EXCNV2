@@ -7,6 +7,8 @@ from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
 import math
 
+MAX_SIZE = 1000000
+
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
 
@@ -99,9 +101,6 @@ def calculate_mini_window(window, mini_window_size):
     return np.array(features)
 
 def load(num, input_path, target_path, window_size, mini_window_size):
-    # input_ = np.loadtxt(input_path, dtype=str)
-    #targets = np.loadtxt(target_path, dtype=str)
-    MAX_SIZE = 1000000
     
     if(num == -1):
         input_ = pd.read_csv(input_path, delimiter="\t",names="abcd")
@@ -151,126 +150,21 @@ def load(num, input_path, target_path, window_size, mini_window_size):
                 tar_pos+=1
             else:
                 break
-    # windows = []
-    # tmp_window, count = [], 0
-    # print("Getting windows features")
-    # for i in range(len(input_)):
-    #     if i == 0 or (input_[i, 0] == input_[i-1, 0] and int(input_[i, 1]) - int(input_[i-1, 1]) == 1):
-    #         tmp_window.append(input_[i])
-    #         count += 1 
-    #         if count == window_size:
-    #             windows.append(tmp_window)
-    #             tmp_window, count = [], 0
+   
     print("Calculating mini window features")
     s_features = []
-    # windows_targets = []
     for k in range(len(s)):
         print("Looking at window {} out of {} total".format(k, len(s)))
         windows = s[k]
         windows_features = []
         for i in range(len(windows)):
-            #print("Looking at window {} out of {} total".format(i, len(windows)))
             chrom = windows[i][0][0]
-            #import pdb; pdb.set_trace()
             features = calculate_mini_window(windows[i], mini_window_size)
             windows_features.append(features)
-        # target = calculate_target_features(chrom, features[0], targets)
-        # windows_targets.append(target)
+
         s_features.append(windows_features)
-    # print("Calculating gaps")
-    # gaps = np.zeros(len(windows_features))
-    # for i in range(1, len(windows_features)):
-    #     gaps[i] = int((windows_features[i][0] - windows_features[i-1][0] - window_size) / window_size)
 
-    # for i in range(len(windows_features)):
-    #     windows_features[i][0] = gaps[i]
-
-    # all_windows_features += windows_features
-    # all_windows_targets += windows_targets
     return s_features, windows_targets
-
-    # return all_windows_features, all_windows_targets
-
-    # x = np.zeros((num, seq_len, 5))
-    # y = np.zeros((num, 1))
-    # dist = np.zeros((num, 1))
-    # dist[0] = 0
-    # # x = torch.zeros((num, seq_len, 5))
-    # # y = torch.zeros((num, 1))
-    # cur_seq_len = 0
-    # cur_num = 0
-    # prev_in_pos = -1
-
-    # with open(input_path, "rb") as infile:
-    #     with open(target_path, "rb") as tarfile:
-    #         cur_seq_len = 0
-    #         cur_num = 0
-    #         tar_num = 0
-    #         for tarline in tarfile:
-    #             tar_num+=1
-    #             tarline = tarline.rstrip().split("\t")
-    #             if(len(tarline) != 4):
-    #                 continue
-    #             for inline in infile:
-    #                 inline = inline.rstrip().split("\t")
-    #                 if(len(inline) != 4):
-    #                     continue
-
-    #                 #cnv_in_seq = 'No'
-    #                 tar_chrom = tarline[0] if 'chr' in tarline[0] else 'chr' + tarline[0]
-    #                 tar_start = int(tarline[1])
-    #                 tar_end = int(tarline[2])
-    #                 tar_cnv = tarline[3]
-
-    #                 in_chrom = inline[0]
-    #                 in_pos = int(inline[1])
-    #                 if(cur_num > 0):
-    #                     dist[cur_num] = in_pos - prev_in_pos
-    #                 in_base = inline[2].upper()
-    #                 in_read_depth = inline[3]
-                     
-    #                 # Check if chromosomes are equal
-    #                 if(tar_chrom == in_chrom):
-    #                     # if(tar_start <= in_pos and in_pos <= tar_end):
-    #                     if(in_pos > tar_end):
-    #                         break
-    #                     # Check if in_base is a valid base (A, T, C or G)
-    #                     if(in_base in all_bases): 
-    #                         seq_tensor = seq_to_tensor(in_base)
-    #                     else:
-    #                         continue
-    #                     rd_tensor = np.array([[[int(in_read_depth)]]])
-    #                     x[cur_num][cur_seq_len] = np.concatenate((seq_tensor, rd_tensor),2)
-                        
-    #                     cur_seq_len+=1
-
-    #                     # When cur_seq_len is equal to seq_len set y and increment cur_num
-    #                     if(cur_seq_len == seq_len):
-    #                         #import pdb; pdb.set_trace()
-    #                         y[cur_num] = target_to_one_hot(tar_cnv)
-    #                         cur_seq_len = 0
-    #                         cur_num+=1
-    #                         prev_in_pos = in_pos
-    #                         cnv_in_seq = False
-    #                         # if current number of training examples is equal to total number of training examples
-    #                         # then return
-    #                         if(cur_num == num):
-    #                             print("Found %d training examples." %(num))
-    #                             return x, y
-
-    #                 # pos in input file has passed the end pos in the target file                      
-    #                 # elif(in_pos > tar_end):
-    #                 #     break
-                        
-    #                 # # pos in input file has not reached the start pos in the target file
-    #                 # elif(in_pos < tar_start):
-    #                 #     continue
-
-    #                 # go to next inline if chromosomes are not equal
-    #                 else:
-    #                     continue
-    # print("Did not load enough training examples")
-    # return x, y, dist
     
 def load_data(input_path, target_path, num, window_size, mini_window_size):
     '''
@@ -318,9 +212,6 @@ def load_data_from_file(in_path, tar_path):
         y: numpy array of target data
     '''
     print("Loading data from file...")
-    # x = np.load(in_path)
-    # y = np.load(tar_path)
-
     with open(in_path, 'r') as infile:
         x = pickle.load(infile)
     
@@ -346,107 +237,20 @@ def rearrange(input_data):
     
     return new_input_data
 
-class CNVdata(Dataset):
-    def __init__(self, input_data, target_data):
-        self.input_data = [data[1] for data in input_data]
-        self.input_gaps = [data[0] for data in input_data]
-        self.target_data = target_data
-    
-    def __len__(self):
-        return len(self.input_data)
-    
-    def __getitem__(self, idx):
-        sample ={'input': self.input_data[idx], 'gap': self.input_gaps[idx], 'target': self.target_data[idx]}
-        return sample
-
-
 class Corpus(object):
-    # def __init__(self, path):
     def __init__(self, num, window_size, mini_window_size, paths, data_folder):
         self.length = n_targets
-
-        # train_in_txt = data_folder + "/input_train.out"
-        # train_tar_txt = data_folder + "/target_train.out"
-
-        # val_in_txt = data_folder + "/input_val.out"
-        # val_tar_txt = data_folder + "/target_val.out"
-
-        # test_in_txt = data_folder + "/input_test.out"
-        # test_tar_txt = data_folder + "/target_test.out"
-
-        # train_in_path = paths['train_in']
-        # train_tar_path = paths['train_tar']
-
-        # val_in_path = paths['val_in']
-        # val_tar_path = paths['val_tar']
-
-        # test_in_path = paths['test_in']
-        # test_tar_path = paths['test_tar']
 
         data_in_path = paths['data_in']
         data_tar_path = paths['data_tar']
         try:
             data_x, data_y = load_data_from_file(data_in_path, data_tar_path)
         except:
-            print("Could not load presaved training data")
-            # train_,x train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
-            # save_data(train_x, train_y, train_in_path, train_tar_path)
-
-        # try:
-        #     train_x, train_y = load_data_from_file(train_in_path, train_tar_path)
-        # except:
-        #     print("Could not load presaved training data")
-        #     train_x, train_y = load_data(train_in_txt, train_tar_txt, num, window_size, mini_window_size)
-        #     save_data(train_x, train_y, train_in_path, train_tar_path)
-        
-        # try:
-        #     val_x, val_y = load_data_from_file(val_in_path, val_tar_path)
-        # except:
-        #     print("Could not load presaved validation data")
-        #     val_x, val_y = load_data(val_in_txt, val_tar_txt, num, window_size, mini_window_size)
-        #     save_data(val_x, val_y, val_in_path, val_tar_path)
-
-        # try:
-        #     test_x, test_y = load_data_from_file(test_in_path, test_tar_path)
-        # except:
-        #     print("Could not load presaved test data")
-        #     test_x, test_y = load_data(test_in_txt, test_tar_txt, num, window_size, mini_window_size)
-        #     save_data(test_x,test_y, test_in_path, test_tar_path)
+            print("Could not load training data")
+    
         print("TARGET VALUES")
         unique, counts = np.unique(data_y, return_counts=True)
-        print("TRAIN TAR: {}".format(dict(zip(unique, counts))))
-
-        # unique, counts = np.unique(val_y, return_counts=True)
-        # print("VAL TAR: {}".format(dict(zip(unique, counts))))
-
-        # unique, counts = np.unique(test_y, return_counts=True)
-        # print("TEST TAR: {}".format(dict(zip(unique, counts))))
-
-        # self.train_dataset = CNVdata(train_x, train_y)
-        # self.val_dataset = CNVdata(val_x, val_y)
-        # self.test_dataset = CNVdata(test_x, test_y)
-        # validation_set = create_dict(val_x, val_y)
-        # test_set = create_dict(test_x, test_y)
+        print("DATASET TAR: {}".format(dict(zip(unique, counts))))
 
         self.data_x = data_x
         self.data_y = data_y
-
-        # self.train_in = train_x
-        # self.train_tar = train_y
-
-        # self.val_in = train_x
-        # self.val_tar = train_y
-
-        # self.test_in = train_x
-        # self.test_tar = train_y
-    
-        # self.val_in = val_x
-        # self.val_tar = val_y
-
-        # self.test_in = test_x
-        # self.test_tar = test_y
-
-
-        
-
-    

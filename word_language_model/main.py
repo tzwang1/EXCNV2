@@ -26,14 +26,14 @@ parser.add_argument('--data_tar', type=str, default='data_y.pl',
                     help='location of the target training data')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
-parser.add_argument('--size', type=int, default=5,
-                    help='size of data')
-parser.add_argument('--num', type=int, default=200000000,
-                    help='number of training examples')
-parser.add_argument('--win_s', type=int, default=10000,
-                    help='length of sequence')
-parser.add_argument('--mini_win_s', type=int, default=100,
-                    help='length of small window')
+# parser.add_argument('--size', type=int, default=5,
+#                     help='size of data')
+# parser.add_argument('--num', type=int, default=200000000,
+#                     help='number of training examples')
+# parser.add_argument('--win_s', type=int, default=10000,
+#                     help='length of sequence')
+# parser.add_argument('--mini_win_s', type=int, default=100,
+#                     help='length of small window')
 parser.add_argument('--nhid', type=int, default=50,
                     help='number of hidden units per layer')
 parser.add_argument('--padding', type=int, default=0,
@@ -263,8 +263,8 @@ def train():
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
         target_tensors = torch.LongTensor(target_s)
         #input_tensors = input_tensors.transpose(0,1).contiguous()
-        if key >= 29 :
-            import pdb; pdb.set_trace()
+        # if key >= 29 :
+        #     import pdb; pdb.set_trace()
         num_tensors = input_tensors.shape[0]
         #num_tensors = input_tensors.shape[1]
         num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
@@ -335,25 +335,24 @@ try:
             val_loss_lst.append(val_loss)
             val_correct_lst.append(val_correct)
             print('-' * 89)
-            print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
-                    'train correct{:.2f}|'
-                    'train gain correct{:8.2f}|'
-                    'train neutral correct{:8.2f}|'
-                    'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
-                                                train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
             # print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
-            #         ' train correct{:.2f} |'.format(epoch,lr, (time.time() - epoch_start_time),train_loss, train_correct))
+            #         'train correct{:.2f}|'
+            #         'train gain correct{:8.2f}|'
+            #         'train neutral correct{:8.2f}|'
+            #         'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
+            #                                     train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
+            print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
+                    ' train correct{:.2f} |'.format(epoch,lr, (time.time() - epoch_start_time),train_loss, train_correct))
             print('-' * 89)
             print('-' * 89)
-            print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
-                    'val correct{:8.2f} | '
-                    'val gain correct{:8.2f}| '
-                    'val neutral correct{:8.2f}| '
-                    'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
-                                                val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
             # print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
-            #         ' val correct{:8.2f} | '.format(epoch,lr, (time.time() - epoch_start_time),val_loss, val_correct))
-                                                
+            #         'val correct{:8.2f} | '
+            #         'val gain correct{:8.2f}| '
+            #         'val neutral correct{:8.2f}| '
+            #         'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
+            #                                     val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
+            print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
+                    ' val correct{:8.2f} | '.format(epoch,lr, (time.time() - epoch_start_time),val_loss, val_correct))                                 
             print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
         if not best_val_loss or val_loss < best_val_loss:
