@@ -3,33 +3,6 @@ import torch.nn as nn
 from torch.autograd import Variable
 import math
 
-# class ConvNet(nn.Module):
-#     def __init__(self):
-#         super(ConvNet, self).__init__()
-#         conv_out_channel = 5
-#         conv_kernel_size = 5
-#         conv_pooling_kernel = 2
-#         fc_inp_size = 10
-
-#         self.conv2d = nn.Conv2d(1, conv_out_channel, (conv_kernel_size, 2))
-#         self.maxpool = nn.MaxPool1d(conv_pooling_kernel)
-
-#         self.fc1 = nn.Linear(15, fc_inp_size)
-
-#     def forward(self, input_):
-#         # output = self.conv1d(input)
-#         # Apply 2D Conv and 1D maxpool
-#         input_ = input_.unsqueeze(1)
-#         input_ = self.conv2d(input_)
-#         input_ = input_.squeeze(-1)
-#         input_ = self.maxpool(input_)
-#         input_ = input_.view(input_.shape[0], -1)
-        
-#         output = self.fc1(input_)
-
-#         return output
-
-
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
@@ -81,9 +54,8 @@ class RNNModel(nn.Module):
             except KeyError:
                 raise ValueError( """An invalid option for `--model` was supplied,
                                  options are ['LSTM', 'GRU', 'RNN_TANH' or 'RNN_RELU']""")
-            # self.rnn = nn.RNN(ninp, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
-            self.rnn = nn.RNN(fc2_out_size, nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
-        # self.decoder = nn.Linear(nhid, ntoken)
+            self.rnn = nn.RNN(self.fc2_out_size, self.nhid, nlayers, nonlinearity=nonlinearity, dropout=dropout)
+
         self.decoder1 = nn.Linear(self.nhid, self.decode1_out)
         self.decoder2 = nn.Linear(self.decode1_out, ntoken)
 
