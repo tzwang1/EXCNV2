@@ -328,20 +328,25 @@ try:
             val_loss_lst.append(val_loss)
             val_correct_lst.append(val_correct)
             print('-' * 89)
+            # print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
+            #         'train correct{:.2f}|'
+            #         'train gain correct{:8.2f}|'
+            #         'train neutral correct{:8.2f}|'
+            #         'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
+            #                                     train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
             print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
-                    'train correct{:.2f}|'
-                    'train gain correct{:8.2f}|'
-                    'train neutral correct{:8.2f}|'
-                    'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
-                                                train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
+                    'train correct{:.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),train_loss, train_correct))
             print('-' * 89)
             print('-' * 89)
+            # print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
+            #         'val correct{:8.2f} | '
+            #         'val gain correct{:8.2f}| '
+            #         'val neutral correct{:8.2f}| '
+            #         'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
+            #                                     val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
             print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
-                    'val correct{:8.2f} | '
-                    'val gain correct{:8.2f}| '
-                    'val neutral correct{:8.2f}| '
-                    'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
-                                                val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
+                    'val correct{:8.2f} | '.format(epoch,lr, (time.time() - epoch_start_time),val_loss, val_correct))
+                                                
             print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
         if not best_val_loss or val_loss < best_val_loss:
