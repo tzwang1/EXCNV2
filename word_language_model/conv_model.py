@@ -105,7 +105,7 @@ class RNNModel(nn.Module):
             input_ = self.fc2(input_)
             
             input_list.append(input_.unsqueeze(0))
-    
+            
         input_ = torch.cat(input_list, 0)
         output, hidden = self.rnn(input_, hidden)
         output = self.drop(output)

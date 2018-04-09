@@ -263,6 +263,8 @@ def train():
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
         target_tensors = torch.LongTensor(target_s)
         #input_tensors = input_tensors.transpose(0,1).contiguous()
+        if key >= 29 :
+            import pdb; pdb.set_trace()
         num_tensors = input_tensors.shape[0]
         #num_tensors = input_tensors.shape[1]
         num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
@@ -271,8 +273,13 @@ def train():
             start = i * args.batch_size
             end = start + args.batch_size
 
-            data = Variable(torch.stack(input_tensors[start:end]))
-            targets = Variable(target_tensors[start:end])
+            if(args.cuda):
+                data = Variable(torch.stack(input_tensors[start:end]).cuda)
+                targets = Variable(target_tensors[start:end].cuda)
+            else:
+                data = Variable(torch.stack(input_tensors[start:end]))
+                targets = Variable(target_tensors[start:end])
+
             #targets = Variable(target_tensors)
             # The batch size may be different in each epoch
             BS = data.size(0)
@@ -286,7 +293,7 @@ def train():
             
             output, hidden = model(data, hidden)
             loss = criterion(output.view(-1, ntokens), targets.long().view(-1))
-            loss /= float(data.size(1))
+            #loss /= float(data.size(1))
             loss.backward()
 
             # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs / LSTMs.
@@ -328,24 +335,24 @@ try:
             val_loss_lst.append(val_loss)
             val_correct_lst.append(val_correct)
             print('-' * 89)
-            # print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
-            #         'train correct{:.2f}|'
-            #         'train gain correct{:8.2f}|'
-            #         'train neutral correct{:8.2f}|'
-            #         'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
-            #                                     train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
             print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
-                    'train correct{:.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),train_loss, train_correct))
+                    'train correct{:.2f}|'
+                    'train gain correct{:8.2f}|'
+                    'train neutral correct{:8.2f}|'
+                    'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
+                                                train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
+            # print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
+            #         ' train correct{:.2f} |'.format(epoch,lr, (time.time() - epoch_start_time),train_loss, train_correct))
             print('-' * 89)
             print('-' * 89)
-            # print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
-            #         'val correct{:8.2f} | '
-            #         'val gain correct{:8.2f}| '
-            #         'val neutral correct{:8.2f}| '
-            #         'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
-            #                                     val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
             print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
-                    'val correct{:8.2f} | '.format(epoch,lr, (time.time() - epoch_start_time),val_loss, val_correct))
+                    'val correct{:8.2f} | '
+                    'val gain correct{:8.2f}| '
+                    'val neutral correct{:8.2f}| '
+                    'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
+                                                val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
+            # print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
+            #         ' val correct{:8.2f} | '.format(epoch,lr, (time.time() - epoch_start_time),val_loss, val_correct))
                                                 
             print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.

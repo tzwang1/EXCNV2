@@ -5,6 +5,7 @@ import pandas as pd
 import pickle
 from torch.utils.data import Dataset, DataLoader
 from torch.autograd import Variable
+import math
 
 all_bases = ['A', 'T', 'C', 'G']
 n_bases = len(all_bases)
@@ -63,6 +64,9 @@ def calculate_mini_window_feature(mini_window):
     depth = np.mean(mini_window[:, -1].astype(float))
     gc_num = len(np.where((mini_window[:, -2] == 'C') | (mini_window[:, -2] == 'G')| (mini_window[:, -2] == 'c') | (mini_window[:, -2] == 'g'))[0])
     gc_ratio = gc_num * 1.0 / len(mini_window)
+    if math.isnan(depth) or math.isnan(gc_ratio):
+        import pdb; pdb.set_trace()
+
     return [depth, gc_ratio]
 
 def calculate_target_features(chrom, start, targets):
