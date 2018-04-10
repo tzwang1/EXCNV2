@@ -44,7 +44,7 @@ optional arguments:
 
 With these arguments, a variety of models can be tested.
 
-``bash
+```bash
 Data Preprocessing
 load.py - separates bam file and assocaited target regions into input and target files
 clean_data.sh - cleans processed input file
