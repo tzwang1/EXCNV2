@@ -44,4 +44,18 @@ optional arguments:
 
 With these arguments, a variety of models can be tested.
 
+``bash
+Data Preprocessing
+load.py - separates bam file and assocaited target regions into input and target files
+clean_data.sh - cleans processed input file
+clean_data_single.py - generates input and targets for model using the cleaned and processed input file and target files and saves it as a pickle file
+combine_data.py - combines multiple input pickle and output pickle files into a larger file
+
+Model
+main.py - the entry point for the model
+data.py - loads the data into the model
+conv_model.py -  model architecture
+
+
+```
 
