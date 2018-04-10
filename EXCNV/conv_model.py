@@ -6,7 +6,7 @@ import math
 class RNNModel(nn.Module):
     """Container module with an encoder, a recurrent module, and a decoder."""
 
-    def __init__(self, rnn_type, ntoken, input_height, input_width, hyperparameters, nlayers, cnn_params, dropout=0.5, tie_weights=False):
+    def __init__(self, rnn_type, ntoken, input_height, input_width, hyperparameters, nlayers, cnn_params, dropout=0.5):
         super(RNNModel, self).__init__()
 
         self.drop = nn.Dropout(dropout)
@@ -59,16 +59,16 @@ class RNNModel(nn.Module):
         self.decoder1 = nn.Linear(self.nhid, self.decode1_out)
         self.decoder2 = nn.Linear(self.decode1_out, ntoken)
 
-        # Optionally tie weights as in:
-        # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
-        # https://arxiv.org/abs/1608.05859
-        # and
-        # "Tying Word Vectors and Word Classifiers: A Loss Framework for Language Modeling" (Inan et al. 2016)
-        # https://arxiv.org/abs/1611.01462
-        if tie_weights:
-            if nhid != ninp:
-                raise ValueError('When using the tied flag, nhid must be equal to emsize')
-            self.decoder.weight = self.encoder.weight
+        # # Optionally tie weights as in:
+        # # "Using the Output Embedding to Improve Language Models" (Press & Wolf 2016)
+        # # https://arxiv.org/abs/1608.05859
+        # # and
+        # # "Tying Word Vectors and Word Classifiers: A Loss Framework for Language Modeling" (Inan et al. 2016)
+        # # https://arxiv.org/abs/1611.01462
+        # if tie_weights:
+        #     if nhid != ninp:
+        #         raise ValueError('When using the tied flag, nhid must be equal to emsize')
+        #     self.decoder.weight = self.encoder.weight
 
         self.init_weights()
 

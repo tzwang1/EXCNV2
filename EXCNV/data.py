@@ -238,7 +238,7 @@ def rearrange(input_data):
     return new_input_data
 
 class Corpus(object):
-    def __init__(self, num, window_size, mini_window_size, paths, data_folder):
+    def __init__(self, paths):
         self.length = n_targets
 
         data_in_path = paths['data_in']

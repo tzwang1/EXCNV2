@@ -20,6 +20,12 @@ The `main.py` script accepts the following arguments:
 optional arguments:
   -h, --help         show this help message and exit
   --data DATA        location of the data folder
+  --data_in          name of the input data
+  --data_tar         name of the target data
+  --fcout1           size of the output for the first fully connected layer
+  --fcout2           size of the output for the second fully connected layer
+  --decode1          size of the output for the third fully connected layer
+  --show_every       numbero of epochs to train on before showing accuracy of training and validation set 
   --model MODEL      type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)
   --nhid NHID        number of hidden units per layer
   --nlayers NLAYERS  number of layers
@@ -37,4 +43,5 @@ optional arguments:
 ```
 
 With these arguments, a variety of models can be tested.
-As an example, the following arguments produce slower but better models:
+
+
