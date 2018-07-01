@@ -98,6 +98,10 @@ paths = {}
 paths['data_in'] = os.path.join(args.data, args.data_in)
 paths['data_tar'] = os.path.join(args.data, args.data_tar)
 
+print("Getting input data from: {}".format(paths['data_in']))
+print("Getting target data from: {}".format(paths['data_tar']))
+
+#corpus = data.Corpus(paths)
 corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.data)
 
 def create_dict(input_data, target_data):
