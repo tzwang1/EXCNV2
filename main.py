@@ -18,7 +18,7 @@ import data
 import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch RNN/LSTM CNV detection Model')
-parser.add_argument('--data', type=str, default='data',
+parser.add_argument('--data', type=str, default='data_to_transfer/clean',
                     help='location of the data')
 parser.add_argument('--data_in', type=str, default='data_x.pl',
                     help='location of the input training data')
@@ -26,20 +26,28 @@ parser.add_argument('--data_tar', type=str, default='data_y.pl',
                     help='location of the target training data')
 parser.add_argument('--model', type=str, default='LSTM',
                     help='type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)')
+parser.add_argument('--size', type=int, default=5,
+                    help='size of data')
+parser.add_argument('--num', type=int, default=200000000,
+                    help='number of training examples')
+parser.add_argument('--win_s', type=int, default=10000,
+                    help='length of sequence')
+parser.add_argument('--mini_win_s', type=int, default=100,
+                    help='length of small window')
 parser.add_argument('--nhid', type=int, default=50,
                     help='number of hidden units per layer')
-# parser.add_argument('--padding', type=int, default=0,
-#                     help='amount of padding for CNN')
-# parser.add_argument('--stride', type=int, default=1,
-#                     help='amount of stride for CNN')
-# parser.add_argument('--kernel_h', type=int, default=5,
-#                     help='kernel height for CNN')
-# parser.add_argument('--kernel_w', type=int, default=1,
-#                     help='kernel width for CNN')
-# parser.add_argument('--pool_kernel', type=int, default=2,
-#                     help='pool kernel size for CNN')
-# parser.add_argument('--out_channel', type=int, default=5,
-#                     help='number of output channels for CNN')
+parser.add_argument('--padding', type=int, default=0,
+                    help='amount of padding for CNN')
+parser.add_argument('--stride', type=int, default=1,
+                    help='amount of stride for CNN')
+parser.add_argument('--kernel_h', type=int, default=5,
+                    help='kernel height for CNN')
+parser.add_argument('--kernel_w', type=int, default=1,
+                    help='kernel width for CNN')
+parser.add_argument('--pool_kernel', type=int, default=2,
+                    help='pool kernel size for CNN')
+parser.add_argument('--out_channel', type=int, default=5,
+                    help='number of output channels for CNN')
 parser.add_argument('--nlayers', type=int, default=2,
                     help='number of layers')
 parser.add_argument('--lr', type=float, default=20,
@@ -56,12 +64,12 @@ parser.add_argument('--epochs', type=int, default=40,
                     help='upper epoch limit')
 parser.add_argument('--batch_size', type=int, default=20, metavar='N',
                     help='batch size')
-# parser.add_argument('--bptt', type=int, default=50,
-#                     help='bptt length')
+parser.add_argument('--bptt', type=int, default=50,
+                    help='bptt length')
 parser.add_argument('--dropout', type=float, default=0.2,
                     help='dropout applied to layers (0 = no dropout)')
-# parser.add_argument('--tied', action='store_true',
-#                     help='tie the word embedding and softmax weights')
+parser.add_argument('--tied', action='store_true',
+                    help='tie the word embedding and softmax weights')
 parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true',
@@ -90,7 +98,7 @@ paths = {}
 paths['data_in'] = os.path.join(args.data, args.data_in)
 paths['data_tar'] = os.path.join(args.data, args.data_tar)
 
-corpus = data.Corpus(paths)
+corpus = data.Corpus(int(args.num), args.win_s, args.mini_win_s, paths, args.data)
 
 def create_dict(input_data, target_data):
     d = defaultdict(list)
@@ -138,18 +146,12 @@ test_data = create_dict(test_in, test_tar)
 ntokens = corpus.length
 
 convNet_params = {}
-convNet_params['padding'] = 0
-convNet_params['stride'] = 1
-convNet_params['kernel_h'] = 5
-convNet_params['kernel_w'] = 1
-convNet_params['out_channel'] = 5
-convNet_params['pool_kernel'] = 2
-# convNet_params['padding'] = args.padding
-# convNet_params['stride'] = args.stride
-# convNet_params['kernel_h'] = args.kernel_h
-# convNet_params['kernel_w'] = args.kernel_w
-# convNet_params['out_channel'] = args.out_channel
-# convNet_params['pool_kernel'] = args.pool_kernel
+convNet_params['padding'] = args.padding
+convNet_params['stride'] = args.stride
+convNet_params['kernel_h'] = args.kernel_h
+convNet_params['kernel_w'] = args.kernel_w
+convNet_params['out_channel'] = args.out_channel
+convNet_params['pool_kernel'] = args.pool_kernel
 
 input_height = len(train_in[0][0])
 input_width = len(train_in[0][0][0])
@@ -160,7 +162,7 @@ hyperparameters['fcout1'] = args.fcout1
 hyperparameters['fcout2'] = args.fcout2
 hyperparameters['decode1'] = args.decode1
 
-model = model.RNNModel(args.model, ntokens, input_height, input_width, hyperparameters, args.nlayers, convNet_params, args.dropout)
+model = model.RNNModel(args.model, ntokens, input_height, input_width, hyperparameters, args.nlayers, convNet_params, args.dropout, args.tied)
 if args.cuda:
     model.cuda()
 
@@ -261,8 +263,8 @@ def train():
         input_tensors = torch.stack([torch.FloatTensor(s) for s in input_s])
         target_tensors = torch.LongTensor(target_s)
         #input_tensors = input_tensors.transpose(0,1).contiguous()
-        # if key >= 29 :
-        #     import pdb; pdb.set_trace()
+        if key >= 29 :
+            import pdb; pdb.set_trace()
         num_tensors = input_tensors.shape[0]
         #num_tensors = input_tensors.shape[1]
         num_batches = int(np.ceil(num_tensors / float(args.batch_size)))
@@ -333,24 +335,25 @@ try:
             val_loss_lst.append(val_loss)
             val_correct_lst.append(val_correct)
             print('-' * 89)
+            print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
+                    'train correct{:.2f}|'
+                    'train gain correct{:8.2f}|'
+                    'train neutral correct{:8.2f}|'
+                    'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
+                                                train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
             # print('| epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
-            #         'train correct{:.2f}|'
-            #         'train gain correct{:8.2f}|'
-            #         'train neutral correct{:8.2f}|'
-            #         'train loss correct{:8.2f}|'.format(epoch,lr, (time.time() - epoch_start_time),
-            #                                     train_loss, train_correct, train_correct_gain, train_correct_neutral, train_correct_loss))
-            print('| end of epoch {:3d} | lr {} | time: {:5.2f}s | train loss {:5.5f} |'
-                    ' train correct {:.2f} |'.format(epoch,lr, (time.time() - epoch_start_time),train_loss, train_correct))
+            #         ' train correct{:.2f} |'.format(epoch,lr, (time.time() - epoch_start_time),train_loss, train_correct))
             print('-' * 89)
             print('-' * 89)
+            print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
+                    'val correct{:8.2f} | '
+                    'val gain correct{:8.2f}| '
+                    'val neutral correct{:8.2f}| '
+                    'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
+                                                val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
             # print('| epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
-            #         'val correct{:8.2f} | '
-            #         'val gain correct{:8.2f}| '
-            #         'val neutral correct{:8.2f}| '
-            #         'val loss correct{:8.2f}| '.format(epoch,lr, (time.time() - epoch_start_time),
-            #                                     val_loss, val_correct, val_correct_gain, val_correct_loss, val_correct_loss))
-            print('| end of epoch {:3d} | lr {} | time: {:5.2f}s | valid loss {:5.5f} |'
-                    ' val correct{:8.2f} | '.format(epoch,lr, (time.time() - epoch_start_time),val_loss, val_correct))                                 
+            #         ' val correct{:8.2f} | '.format(epoch,lr, (time.time() - epoch_start_time),val_loss, val_correct))
+                                                
             print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
         if not best_val_loss or val_loss < best_val_loss:
@@ -377,6 +380,6 @@ with open(args.save, 'rb') as f:
 # Run on test data.
 test_loss, correct, test_correct_gain, test_correct_neutral, test_correct_loss = evaluate(test_data)
 print('=' * 89)
-print('| End of training | test loss {:5.2f} | test correct {:8.2f} |'.format(
-    test_loss, correct))
+print('| End of training | test loss {:5.2f} | test correct {:8.2f} | test gain correct {:8.2f} | test neutral correct {:8.2f} | test loss correct {:8.2f}'.format(
+    test_loss, correct, test_correct_gain, test_correct_neutral, test_correct_loss))
 print('=' * 89)
