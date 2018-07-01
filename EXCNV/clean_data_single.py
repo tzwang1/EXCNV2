@@ -30,10 +30,17 @@ def clean(input_path):
 
     x.to_csv(input_path, sep='\t', index=False, header=False)
 
+#num_cores = multiprocessing.cpu_count()
+
+#print("Cleaning data")
+#if(args.clean == 'True'):
+#    Parallel(n_jobs=num_cores)(delayed(clean)(data_list[0][i]) for i in range(len(data_list)))
+    #clean(args.input_data)
+    
 
 all_data_x = []
 all_data_y = []
-num = -1
+num = (10**6)*5
 window_size = 10000
 mini_window_size = 100
 
@@ -48,4 +55,10 @@ target_path = os.path.join(args.output_dir, args.target_data.replace("out", "pl"
 if not os.path.exists(args.output_dir):
     os.mkdir(args.output_dir)
 data.save_data(all_data_x, all_data_y, input_path, target_path)
+
+#for data_item in all_data:
+#    all_data_x += data_item[0]
+#    all_data_y += data_item[1]
+
+#data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
 
