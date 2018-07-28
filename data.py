@@ -13,6 +13,8 @@ n_bases = len(all_bases)
 all_targets = ['gain', 'neutral', 'loss']
 n_targets = len(all_targets)
 
+new_all_targets = ['Yes', 'No']
+
 # Finds base index from all_bases
 def base_to_index(base):
     return all_bases.index(base)
@@ -20,6 +22,9 @@ def base_to_index(base):
 # Finds target index from all_targets
 def target_to_index(target):
     return all_targets.index(target)
+
+def new_target_to_index(target):
+    return new_all_targets.index(target)
 
 # Converts base to one hot encoding representation
 def base_to_one_hot(base):
@@ -101,7 +106,107 @@ def calculate_mini_window(window, mini_window_size):
     # return [int(window[0][1]), np.array(features)]
     return np.array(features)
 
+def process_targets(targets):
+    new_targets = []
+    for i in range(len(targets)-1):
+        if targets[i][0] == targets[i+1][0]:
+            new_start = targets[i][1]
+            new_end = targets[i+1][2]
+            if targets[i][3] == targets[i+1][3]:
+                breakpoint = "No"
+            else:
+                breakpoint = "Yes"
+
+            new_targets.append([targets[i][0], new_start, new_end, breakpoint])
+
+    return new_targets
+
+def get_valid_chrom(targets):
+    valid = set()
+    for target in targets:
+        if target[0] not in valid:
+            valid.add(target[0])
+
+    return valid
+
+def load_new(num, input_path, target_path, window_size, mini_window_size):
+    '''
+    New style of data preprocessing
+    Identifies breakpoints in between segments.
+    Two segments with the same target do not contain a break point, 
+    while two segments with different breakpoints contain a break point.
+
+    '''
+    window_len = window_size / mini_window_size
+    if num == -1:
+        chunksize=-1
+    else:
+        chunksize=num
+
+    targets = np.genfromtxt(target_path, dtype=None, encoding=None)
+    targets = process_targets(targets)
+    
+    valid_chrom = get_valid_chrom(targets)
+
+    print("Reading in chunks of size {}".format(chunksize))
+    print("Processing input into windows of size {}".format(window_size))
+    print("Processing input in mini_windows of size {}".format(mini_window_size))
+
+    cur_target = 0
+    all_windows = []
+    all_targets = []
+    window = []
+    mini_window = []
+
+    for chunk in pd.read_csv(input_path, delimiter="\t", chunksize=chunksize, names='abcd', dtype=str):
+        cur_target = 0
+        input_ = np.asarray(chunk)
+        for row in input_:
+            if row[0] not in valid_chrom:
+                continue
+           
+            # Try and match the current rows chrom with the targets chrom
+            while row[0] != targets[cur_target][0]:
+                if row[0] > targets[cur_target][0]:
+                    if cur_target < len(targets)-1:
+                        cur_target+=1
+                break
+            
+            # if chrom of current row is less than the chrom of the target, go to the next row
+            if row[0] < targets[cur_target][0]:
+                continue
+
+            # Check whether the current position is within the start and end of the target
+            if row[1] >= targets[cur_target][0] and row[1] <= targets[cur_target][1]:
+                mini_window.append([row[2], row[3]])
+                if len(mini_window) == mini_window_size:
+                    mini_window_features = calculate_mini_window_feature(mini_window)
+                    window.append(mini_window_features)
+                    mini_window = []
+                    if len(window) == window_len:
+                        print("Appending to all windows")
+                        all_windows.append(window)
+                        all_targets.append(new_target_to_index(targets[cur_target][3]))
+                        window = []
+            elif row[1] > targets[cur_target][1]:
+                if cur_target < len(targets)-1:
+                    cur_target+=1
+                    # throws away old target if new targets breakpoint type is different
+                    if targets[cur_target][3] != targets[cur_target-1][3]:
+                        window = []
+                        mini_window = []
+                            
+    return all_windows, all_targets
+
+
+
 def load(num, input_path, target_path, window_size, mini_window_size):
+    '''
+    Old style of data preprocessing 
+    Separates input data in segments of size window_size,
+    with mini windows of size mini_window_size. Each mini_window contains the average read depth
+    and average GC content of size mini_window_size bases.
+    '''
     MAX_LARGE_WINDOW_SIZE = 10**6
 
     if(num == -1):
@@ -140,12 +245,6 @@ def load(num, input_path, target_path, window_size, mini_window_size):
         for i in range(len(input_)):
             chrom = targets[tar_pos][0]
             end_point = int(targets[tar_pos][2])
-            #while str(input_[i,0]) != chrom:
-            #    if tar_pos < len(targets)-1:
-            #        tar_pos+=1
-            #        chrom = targets[tar_pos][0]
-            #    else:
-            #        break
             try:
                 if int(input_[i,1]) <= end_point:
                     tmp_window.append(input_[i])
@@ -203,7 +302,7 @@ def load_data(input_path, target_path, num, window_size, mini_window_size):
     '''
    
     print("Processing data for {} and {}...".format(input_path, target_path))
-    x, y = load(num, input_path, target_path, window_size, mini_window_size)
+    x, y = load_new(num, input_path, target_path, window_size, mini_window_size)
          
     return x, y
 

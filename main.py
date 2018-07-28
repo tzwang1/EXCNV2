@@ -18,7 +18,7 @@ import data
 import conv_model as model
 
 parser = argparse.ArgumentParser(description='PyTorch RNN/LSTM CNV detection Model')
-parser.add_argument('--data', type=str, default='data',
+parser.add_argument('--data', type=str, default='data_to_transfer/clean',
                     help='location of the data')
 parser.add_argument('--data_in', type=str, default='data_x.pl',
                     help='location of the input training data')

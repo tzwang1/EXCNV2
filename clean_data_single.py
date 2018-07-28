@@ -16,9 +16,13 @@ parser.add_argument('--output_dir', type=str, default='clean_pickle',
                     help='output folder for pickle files')
 
 args = parser.parse_args()
-#data_list = pd.read_csv(args.data_list, sep=",", header=None)
+
 
 def clean(input_path):
+    '''
+    Removes 'chr' from first column in input files, and removes any
+    invalid rows
+    '''
     print("Cleaning {}".format(input_path))
     x = pd.DataFrame()
     with open(input_path) as f:
@@ -30,14 +34,6 @@ def clean(input_path):
 
     x.to_csv(input_path, sep='\t', index=False, header=False)
 
-#num_cores = multiprocessing.cpu_count()
-
-#print("Cleaning data")
-#if(args.clean == 'True'):
-#    Parallel(n_jobs=num_cores)(delayed(clean)(data_list[0][i]) for i in range(len(data_list)))
-    #clean(args.input_data)
-    
-
 all_data_x = []
 all_data_y = []
 num = (10**6)*5
@@ -45,20 +41,12 @@ window_size = 10000
 mini_window_size = 100
 
 print("Processing data into inputs and targets")
-#all_data = Parallel(n_jobs=num_cores)(delayed(data.load_data)(data_list[0][i], data_list[1][i], num, window_size, mini_window_size) for i in range(len(data_list)))
 
 all_data_x, all_data_y = data.load_data(args.input_data, args.target_data, num, window_size, mini_window_size)
 
-
+# Saves processed data
 input_path = os.path.join(args.output_dir, args.input_data.replace("out", "pl"))
 target_path = os.path.join(args.output_dir, args.target_data.replace("out", "pl"))
 if not os.path.exists(args.output_dir):
     os.mkdir(args.output_dir)
 data.save_data(all_data_x, all_data_y, input_path, target_path)
-
-#for data_item in all_data:
-#    all_data_x += data_item[0]
-#    all_data_y += data_item[1]
-
-#data.save_data(all_data_x, all_data_y, 'data_x.pl', 'data_y.pl')
-
